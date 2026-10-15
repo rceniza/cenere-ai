@@ -10,6 +10,7 @@ PATCH_EVAL = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PATCH_EVAL)
 CASES = [json.loads(line) for line in (ROOT / "curriculum/evaluations/patch-repair-v1/cases.jsonl").read_text().splitlines()]
 CASES_V2 = [json.loads(line) for line in (ROOT / "curriculum/evaluations/patch-repair-v2/cases.jsonl").read_text().splitlines()]
+CASES_V3 = [json.loads(line) for line in (ROOT / "curriculum/evaluations/patch-repair-v3/cases.jsonl").read_text().splitlines()]
 
 
 class PatchEvaluationTests(unittest.TestCase):
@@ -119,6 +120,40 @@ module.exports = { isTrustedRedirect };
         )
         answer = f"```diff\n{body}```"
         self.assertEqual(PATCH_EVAL.check(CASES_V2[0], answer), [])
+
+    def test_patch_repair_v3_go_and_csharp_reference_fixes_pass(self):
+        expected = {
+            "patch-v3-go-retries-heldout": ("retries.go", '''package main
+
+func clampRetries(value int) int {
+    if value < 1 {
+        return 1
+    }
+    if value > 10 {
+        return 10
+    }
+    return value
+}
+'''),
+            "patch-v3-csharp-port-heldout": ("NetworkRules.cs", '''public static class NetworkRules
+{
+    public static bool IsValidPort(int port)
+    {
+        return port >= 1 && port <= 65535;
+    }
+}
+'''),
+        }
+        for case in CASES_V3:
+            with self.subTest(case=case["id"]):
+                path, new = expected[case["id"]]
+                old = (PATCH_EVAL.FIXTURE_ROOT / case["fixture"] / "files" / path).read_text()
+                body = "".join(difflib.unified_diff(
+                    old.splitlines(keepends=True), new.splitlines(keepends=True),
+                    fromfile="a/" + path, tofile="b/" + path,
+                ))
+                answer = f"```diff\ndiff --git a/{path} b/{path}\n{body}```"
+                self.assertEqual(PATCH_EVAL.check(case, answer), [])
 
 
 if __name__ == "__main__":

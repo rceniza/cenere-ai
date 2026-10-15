@@ -46,6 +46,9 @@ SPEC_PROBLEM_V3.loader.exec_module(BUILDER_PROBLEM_V3)
 SPEC_PROBLEM_V4 = importlib.util.spec_from_file_location("problem_solving_v4", ROOT / "curriculum/datasets/build_problem_solving_v4.py")
 BUILDER_PROBLEM_V4 = importlib.util.module_from_spec(SPEC_PROBLEM_V4)
 SPEC_PROBLEM_V4.loader.exec_module(BUILDER_PROBLEM_V4)
+SPEC_PROBLEM_V5 = importlib.util.spec_from_file_location("problem_solving_v5", ROOT / "curriculum/datasets/build_problem_solving_v5.py")
+BUILDER_PROBLEM_V5 = importlib.util.module_from_spec(SPEC_PROBLEM_V5)
+SPEC_PROBLEM_V5.loader.exec_module(BUILDER_PROBLEM_V5)
 
 
 def read_jsonl(path):
@@ -63,6 +66,22 @@ def java_runtime_available():
 
 
 class MultistackDatasetTests(unittest.TestCase):
+    def test_problem_solving_v5_is_reproducible_and_adds_verified_go_csharp_patches(self):
+        rendered = BUILDER_PROBLEM_V5.render()
+        data_path = ROOT / "curriculum/datasets/cenere-problem-solving-v5"
+        for filename, content in rendered.items():
+            self.assertEqual((data_path / filename).read_bytes(), content, filename)
+        train = read_jsonl(data_path / "train.jsonl")
+        valid = read_jsonl(data_path / "valid.jsonl")
+        evaluation = read_jsonl(data_path / "eval.jsonl")
+        self.assertEqual((len(train), len(valid), len(evaluation)), (192, 65, 93))
+        self.assertEqual([row["id"] for row in train[-2:]], [item["id"] for item in BUILDER_PROBLEM_V5.PATCHES])
+        for item, row in zip(BUILDER_PROBLEM_V5.PATCHES, train[-2:]):
+            failures = PATCH_EVAL.check({"fixture": item["fixture"], "context_files": item["context_files"],
+                                          "check_destination": ".", "checks": item["checks"]},
+                                         row["messages"][-1]["content"])
+            self.assertEqual(failures, [], item["id"])
+
     def test_problem_solving_v4_is_reproducible_and_adds_verified_patch_training(self):
         rendered = BUILDER_PROBLEM_V4.render()
         data_path = ROOT / "curriculum/datasets/cenere-problem-solving-v4"

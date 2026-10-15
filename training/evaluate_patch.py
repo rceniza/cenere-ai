@@ -10,7 +10,7 @@ from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_ROOT = ROOT / "curriculum/evaluations"
-ALLOWED_COMMANDS = {"python3", "rustc", "node", "npm", "cargo", "php", "go", "javac", "dotnet"}
+ALLOWED_COMMANDS = {"python3", "rustc", "node", "npm", "cargo", "php", "go", "javac", "java", "dotnet"}
 OUTPUT_LIMIT = 12_000
 
 
@@ -111,7 +111,16 @@ def check(case: dict, answer: str) -> list[str]:
             shutil.copyfile(source_file, destination)
         hidden_checks = source / "checks"
         if hidden_checks.is_dir():
-            shutil.copytree(hidden_checks, work / "checks")
+            destination_name = case.get("check_destination", "checks")
+            if destination_name == ".":
+                destination = work
+            else:
+                try:
+                    destination = work / safe_relative_path(destination_name)
+                except (TypeError, ValueError) as error:
+                    return [f"unsafe hidden-check destination: {error}"]
+            destination.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(hidden_checks, destination, dirs_exist_ok=True)
         initialized = subprocess.run(["git", "init", "--quiet"], cwd=work, capture_output=True, timeout=10)
         if initialized.returncode:
             return ["could not initialize isolated patch workspace"]
