@@ -1535,6 +1535,22 @@ mod tests {
         assert_eq!(message.tool_calls.unwrap().len(), 1);
     }
 
+    #[test]
+    fn current_chat_schema_rejects_image_payload_arrays() {
+        let multimodal = serde_json::json!({
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": "data:image/png;base64,AA=="}},
+                {"type": "text", "text": "Describe this image"}
+            ]
+        });
+        assert!(serde_json::from_value::<ChatMessage>(multimodal).is_err());
+        assert!(serde_json::from_value::<ChatRequest>(serde_json::json!({
+            "message": [{"type": "image", "url": "image.png"}]
+        }))
+        .is_err());
+    }
+
     #[tokio::test]
     async fn sends_tool_schemas_and_decodes_native_tool_call_response() {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};

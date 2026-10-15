@@ -96,7 +96,18 @@ cenere-ai train --iters 30 --num-layers 1
 
 SQLite memory can influence answers immediately. Fine-tuning changes weights only when a candidate passes evaluation and is explicitly configured in the model server; Cenere does not hot-swap adapters into a running model process.
 
-The first curated learning batch is in [`curriculum/datasets/rust-foundations-v1`](curriculum/datasets/rust-foundations-v1). Its sample program is checked with `rustc`; the held-out rubric is run against the base model and the adapter before/after training. Run:
+The initial Rust sample is in [`curriculum/datasets/rust-foundations-v1`](curriculum/datasets/rust-foundations-v1). The broader curated seed spans 25 tracks and all three curriculum stages in [`curriculum/datasets/cenere-multistack-v1`](curriculum/datasets/cenere-multistack-v1): 75 train, 25 validation, and 25 held-out rubric cases. Build the examples and run its base-model benchmark with:
+
+```sh
+python3 curriculum/datasets/build_multistack_v1.py --check
+training/.venv/bin/python training/evaluate.py \
+  --cases curriculum/datasets/cenere-multistack-v1/eval.jsonl \
+  --output training/data/cenere-multistack-v1/base-predictions.jsonl
+```
+
+The rubric checks requested terms and forbidden claims. It is a screening signal, not a semantic correctness proof; compile or test code answers in their own stacks.
+
+For the Rust reference program and its held-out rubric, run:
 
 ```sh
 training/.venv/bin/python training/train.py \

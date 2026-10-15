@@ -22,8 +22,11 @@ def main() -> int:
     parser.add_argument("--cases", type=Path, required=True, help="JSONL cases with prompt/must_include/must_not_include")
     parser.add_argument("--endpoint", default="http://127.0.0.1:8080/v1/chat/completions")
     parser.add_argument("--model", default="default_model")
+    parser.add_argument("--max-tokens", type=int, default=320)
     parser.add_argument("--output", type=Path, help="Optional JSONL prediction output")
     args = parser.parse_args()
+    if args.max_tokens < 1:
+        parser.error("--max-tokens must be positive")
 
     output = args.output.open("w", encoding="utf-8") if args.output else None
     passed = total = 0
@@ -39,11 +42,12 @@ def main() -> int:
             body = json.dumps({
                 "model": args.model,
                 "messages": [
-                    {"role": "system", "content": "Teach the exact requested programming task. Follow the supplied verified reference precisely. Use valid idiomatic syntax, avoid invented APIs or conflicting alternatives, and be concise."},
+                    {"role": "system", "content": "Answer the single requested curriculum task directly and concisely. Be technically accurate, state important safety or resource constraints, and do not claim to have run tools or tests."},
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": 0,
                 "stream": False,
+                "max_tokens": args.max_tokens,
             }).encode()
             request = urllib.request.Request(args.endpoint, data=body, headers={"content-type": "application/json"})
             with urllib.request.urlopen(request, timeout=180) as response:
@@ -53,9 +57,13 @@ def main() -> int:
             ok = not missing and not forbidden
             passed += int(ok)
             total += 1
-            print(f"case {line_number}: {'PASS' if ok else 'FAIL'}; missing={missing}; forbidden={forbidden}")
+            case_id = case.get("id", f"case-{line_number}")
+            track = case.get("track", "unassigned")
+            level = case.get("level", "unassigned")
+            print(f"{case_id} [{track}/{level}]: {'PASS' if ok else 'FAIL'}; missing={missing}; forbidden={forbidden}", flush=True)
             if output:
-                output.write(json.dumps({"case": line_number, "passed": ok, "missing": missing, "forbidden": forbidden, "answer": answer}, ensure_ascii=False) + "\n")
+                output.write(json.dumps({"case": line_number, "id": case_id, "track": track, "level": level, "passed": ok, "missing": missing, "forbidden": forbidden, "answer": answer}, ensure_ascii=False) + "\n")
+                output.flush()
     finally:
         if output:
             output.close()

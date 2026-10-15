@@ -26,19 +26,19 @@ Use examples that represent the behavior you want. Keep a separate `valid.jsonl`
 ## First small run
 
 ```sh
-python train.py --model models/Qwen2.5-Coder-3B-Instruct-4bit --data data --iters 100
+python train.py --model models/Qwen2.5-Coder-3B-Instruct-4bit --data data \
+  --iters 10 --batch-size 1 --num-layers 1 --max-seq-length 512 --val-batches 2
 ```
 
-The suggested starter is a 3B 4-bit MLX coding model; its published model files are about 1.8 GB. Defaults use batch size 1, four trainable layers, and gradient checkpointing to conserve memory. Model choice, sequence length, dataset size, and thermal conditions still affect peak memory. Begin with a short run and watch Activity Monitor's Memory Pressure. Adapter weights are saved under `training/adapters/` and excluded from Git. See the [model card](https://huggingface.co/mlx-community/Qwen2.5-Coder-3B-Instruct-4bit) for model format and license.
+The suggested starter is a 3B 4-bit MLX coding model; its local files are about 1.6 GB. The conservative example uses batch size 1, one trainable layer, a 512-token sequence limit, two validation batches, and a short run. Model choice, prompt length, dataset size, and thermal conditions still affect peak memory. Watch Activity Monitor's Memory Pressure and stop if it turns yellow/red or the machine begins heavy swapping. Adapter weights are saved under `training/adapters/` and excluded from Git. See the [model card](https://huggingface.co/mlx-community/Qwen2.5-Coder-3B-Instruct-4bit) for model format and license.
 
 The `mlx-lm` project supports LoRA/QLoRA, validation data, and low-memory adjustments such as smaller batches or fewer layers. See its [fine-tuning guide](https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md) before changing training options.
 
-After training, fuse the adapter before serving it to the Rust app:
+The MLX server can serve an adapter at startup, without fusing another model copy. Stop the existing server before using the same port, or use a second port for a side-by-side evaluation:
 
 ```sh
-mlx_lm.fuse --model models/Qwen2.5-Coder-3B-Instruct-4bit \
-  --adapter-path adapters/cenere-lora --save-path models/cenere-fused
-mlx_lm.server --model models/cenere-fused --host 127.0.0.1 --port 8080
+mlx_lm.server --model models/Qwen2.5-Coder-3B-Instruct-4bit \
+  --adapter-path adapters/cenere-lora --host 127.0.0.1 --port 8081
 ```
 
-The server exposes the OpenAI-compatible endpoint expected by Cenere. Fused model files are local artifacts and are excluded from Git.
+The server exposes the OpenAI-compatible endpoint expected by Cenere. This loads the adapter when the process starts; it does not hot-swap weights into an already running server. Fusion remains an option when a standalone model artifact is useful, and those model files are excluded from Git. See [`../curriculum/datasets/cenere-multistack-v1`](../curriculum/datasets/cenere-multistack-v1) for the 25-track training/evaluation seed and the [2026-10-15 run report](../curriculum/datasets/cenere-multistack-v1/run-2026-10-15.md).

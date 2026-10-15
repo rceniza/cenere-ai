@@ -50,12 +50,14 @@ def main() -> None:
     parser.add_argument("--iters", type=int, default=100, help="Start small; default is a short trial run")
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--num-layers", type=int, default=4)
+    parser.add_argument("--max-seq-length", type=int, default=1024)
+    parser.add_argument("--val-batches", type=int, default=2)
     args = parser.parse_args()
 
     if platform.system() != "Darwin" or platform.machine() not in {"arm64", "aarch64"}:
         raise SystemExit("This training entry point targets Apple Silicon and MLX.")
-    if args.iters < 1 or args.batch_size < 1 or args.num_layers < 1:
-        raise SystemExit("iters, batch-size, and num-layers must be positive.")
+    if args.iters < 1 or args.batch_size < 1 or args.num_layers < 1 or args.max_seq_length < 1 or args.val_batches < 1:
+        raise SystemExit("iters, batch-size, num-layers, max-seq-length, and val-batches must be positive.")
     validate_dataset(args.data)
     args.output.mkdir(parents=True, exist_ok=True)
 
@@ -66,7 +68,8 @@ def main() -> None:
         str(lora_command), "--model", args.model,
         "--train", "--data", str(args.data), "--adapter-path", str(args.output),
         "--iters", str(args.iters), "--batch-size", str(args.batch_size),
-        "--num-layers", str(args.num_layers),
+        "--num-layers", str(args.num_layers), "--max-seq-length", str(args.max_seq_length),
+        "--val-batches", str(args.val_batches),
     ]
     command.append("--grad-checkpoint")
     print("Starting MLX LoRA training with batch size 1 and a limited layer count.")
