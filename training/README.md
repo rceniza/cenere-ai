@@ -36,6 +36,8 @@ The trainer masks system/user prompt tokens by default so loss is applied to ass
 
 For the correction and code-generation experiment, use [`cenere-multistack-v4`](../curriculum/datasets/cenere-multistack-v4/README.md). It now includes an executable C# task targeting .NET 10. For problem-solving, [`cenere-problem-solving-v3`](../curriculum/datasets/cenere-problem-solving-v3/README.md) adds advanced tool-feedback, security, and infrastructure scenarios. Compare the base and adapter on held-out behavior and executable checks; lower loss alone does not establish improvement.
 
+For action-level code repair, train from [`cenere-problem-solving-v4`](../curriculum/datasets/cenere-problem-solving-v4/README.md), which adds three patch examples that pass the same isolated behavior harness. Evaluate with the separate [`patch-repair-v2`](../curriculum/evaluations/patch-repair-v2/README.md) set so the candidate's training examples do not appear in its comparison. The four-case `patch-repair-v1` baseline and limitations are in [`the run report`](runs/2026-10-15-patch-repair-v1.md).
+
 The MLX server can serve an adapter at startup, without fusing another model copy. Stop the existing server before using the same port, or use a second port for a side-by-side evaluation:
 
 ```sh

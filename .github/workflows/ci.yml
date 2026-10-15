@@ -68,6 +68,9 @@ jobs:
       - name: Verify advanced tool-feedback problem-solving data is reproducible
         run: python3 curriculum/datasets/build_problem_solving_v3.py --check
 
+      - name: Verify executable patch-repair training data is reproducible
+        run: python3 curriculum/datasets/build_problem_solving_v4.py --check
+
       - name: Compile and run polyglot exercise
         run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript,php,go,java,csharp
 

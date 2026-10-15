@@ -44,6 +44,22 @@ class RubricTests(unittest.TestCase):
         self.assertEqual(missing, [])
         self.assertEqual(forbidden, ["administrator"])
 
+    def test_patch_case_prompt_includes_checked_in_source(self):
+        case = {
+            "id": "patch-python-bool-heldout",
+            "fixture": "patch-repair-v1/fixtures/python-bool",
+            "context_files": ["config_value.py"],
+            "prompt": "Fix this function.",
+        }
+        prompt = EVALUATE.prompt_for_case(case)
+        self.assertIn("def parse_bool(value):", prompt)
+        self.assertIn("return bool(value)", prompt)
+
+    def test_patch_case_prompt_rejects_path_traversal(self):
+        case = {"fixture": "../outside", "context_files": [], "prompt": "Fix it"}
+        with self.assertRaisesRegex(ValueError, "unsafe"):
+            EVALUATE.prompt_for_case(case)
+
 
 if __name__ == "__main__":
     unittest.main()

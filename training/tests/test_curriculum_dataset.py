@@ -25,6 +25,9 @@ SPEC_V2.loader.exec_module(BUILDER_V2)
 SPEC_CODE_EVAL = importlib.util.spec_from_file_location("evaluate_code", ROOT / "training/evaluate_code.py")
 CODE_EVAL = importlib.util.module_from_spec(SPEC_CODE_EVAL)
 SPEC_CODE_EVAL.loader.exec_module(CODE_EVAL)
+SPEC_PATCH_EVAL = importlib.util.spec_from_file_location("evaluate_patch", ROOT / "training/evaluate_patch.py")
+PATCH_EVAL = importlib.util.module_from_spec(SPEC_PATCH_EVAL)
+SPEC_PATCH_EVAL.loader.exec_module(PATCH_EVAL)
 SPEC_V3 = importlib.util.spec_from_file_location("multistack_v3", ROOT / "curriculum/datasets/build_multistack_v3.py")
 BUILDER_V3 = importlib.util.module_from_spec(SPEC_V3)
 SPEC_V3.loader.exec_module(BUILDER_V3)
@@ -40,6 +43,9 @@ SPEC_PROBLEM_V2.loader.exec_module(BUILDER_PROBLEM_V2)
 SPEC_PROBLEM_V3 = importlib.util.spec_from_file_location("problem_solving_v3", ROOT / "curriculum/datasets/build_problem_solving_v3.py")
 BUILDER_PROBLEM_V3 = importlib.util.module_from_spec(SPEC_PROBLEM_V3)
 SPEC_PROBLEM_V3.loader.exec_module(BUILDER_PROBLEM_V3)
+SPEC_PROBLEM_V4 = importlib.util.spec_from_file_location("problem_solving_v4", ROOT / "curriculum/datasets/build_problem_solving_v4.py")
+BUILDER_PROBLEM_V4 = importlib.util.module_from_spec(SPEC_PROBLEM_V4)
+SPEC_PROBLEM_V4.loader.exec_module(BUILDER_PROBLEM_V4)
 
 
 def read_jsonl(path):
@@ -57,6 +63,27 @@ def java_runtime_available():
 
 
 class MultistackDatasetTests(unittest.TestCase):
+    def test_problem_solving_v4_is_reproducible_and_adds_verified_patch_training(self):
+        rendered = BUILDER_PROBLEM_V4.render()
+        data_path = ROOT / "curriculum/datasets/cenere-problem-solving-v4"
+        for filename, content in rendered.items():
+            self.assertEqual((data_path / filename).read_bytes(), content, filename)
+        train = read_jsonl(data_path / "train.jsonl")
+        valid = read_jsonl(data_path / "valid.jsonl")
+        evaluation = read_jsonl(data_path / "eval.jsonl")
+        self.assertEqual((len(train), len(valid), len(evaluation)), (190, 65, 93))
+        self.assertEqual([row["id"] for row in train[-3:]], [item["id"] for item in BUILDER_PROBLEM_V4.PATCHES])
+        for item, row in zip(BUILDER_PROBLEM_V4.PATCHES, train[-3:]):
+            case = {"fixture": item["fixture"], "context_files": [item["file"]], "checks": item["checks"]}
+            failures = PATCH_EVAL.check(case, row["messages"][-1]["content"])
+            self.assertEqual(failures, [], item["id"])
+        training_prompts = {row["messages"][0]["content"] for row in train}
+        validation_prompts = {row["messages"][0]["content"] for row in valid}
+        heldout_prompts = {row["prompt"] for row in evaluation}
+        self.assertFalse(training_prompts & validation_prompts)
+        self.assertFalse(training_prompts & heldout_prompts)
+        self.assertFalse(validation_prompts & heldout_prompts)
+
     def test_problem_solving_v3_is_reproducible_and_has_advanced_tool_scenarios(self):
         rendered = BUILDER_PROBLEM_V3.render()
         data_path = ROOT / "curriculum/datasets/cenere-problem-solving-v3"
