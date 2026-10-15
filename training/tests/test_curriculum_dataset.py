@@ -11,6 +11,7 @@ DATA = ROOT / "curriculum/datasets/cenere-multistack-v1"
 DATA_V2 = ROOT / "curriculum/datasets/cenere-multistack-v2"
 DATA_V3 = ROOT / "curriculum/datasets/cenere-multistack-v3"
 DATA_V4 = ROOT / "curriculum/datasets/cenere-multistack-v4"
+DATA_PROBLEM = ROOT / "curriculum/datasets/cenere-problem-solving-v1"
 SPEC = importlib.util.spec_from_file_location(
     "multistack_v1", ROOT / "curriculum/datasets/build_multistack_v1.py"
 )
@@ -30,6 +31,9 @@ SPEC_V3.loader.exec_module(BUILDER_V3)
 SPEC_V4 = importlib.util.spec_from_file_location("multistack_v4", ROOT / "curriculum/datasets/build_multistack_v4.py")
 BUILDER_V4 = importlib.util.module_from_spec(SPEC_V4)
 SPEC_V4.loader.exec_module(BUILDER_V4)
+SPEC_PROBLEM = importlib.util.spec_from_file_location("problem_solving_v1", ROOT / "curriculum/datasets/build_problem_solving_v1.py")
+BUILDER_PROBLEM = importlib.util.module_from_spec(SPEC_PROBLEM)
+SPEC_PROBLEM.loader.exec_module(BUILDER_PROBLEM)
 
 
 def read_jsonl(path):
@@ -47,6 +51,24 @@ def java_runtime_available():
 
 
 class MultistackDatasetTests(unittest.TestCase):
+    def test_problem_solving_dataset_is_reproducible_and_split_safe(self):
+        rendered = BUILDER_PROBLEM.render()
+        for filename, content in rendered.items():
+            self.assertEqual((DATA_PROBLEM / filename).read_bytes(), content, filename)
+        train = read_jsonl(DATA_PROBLEM / "train.jsonl")
+        valid = read_jsonl(DATA_PROBLEM / "valid.jsonl")
+        evaluation = read_jsonl(DATA_PROBLEM / "eval.jsonl")
+        self.assertEqual((len(train), len(valid), len(evaluation)), (161, 53, 69))
+        self.assertEqual(sum(row["track"] == "problem-solving" for row in train), 12)
+        self.assertEqual(sum(row["track"] == "problem-solving" for row in valid), 6)
+        self.assertEqual(sum(row["track"] == "problem-solving" for row in evaluation), 10)
+        train_prompts = {row["messages"][0]["content"] for row in train}
+        valid_prompts = {row["messages"][0]["content"] for row in valid}
+        eval_prompts = {row["prompt"] for row in evaluation}
+        self.assertFalse(train_prompts & valid_prompts)
+        self.assertFalse(train_prompts & eval_prompts)
+        self.assertFalse(valid_prompts & eval_prompts)
+
     def test_committed_data_matches_curated_source(self):
         rendered = BUILDER.render()
         for filename, content in rendered.items():
