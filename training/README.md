@@ -34,7 +34,7 @@ The suggested starter is a 3B 4-bit MLX coding model; its local files are about 
 
 The `mlx-lm` project supports LoRA/QLoRA, validation data, and low-memory adjustments such as smaller batches or fewer layers. See its [fine-tuning guide](https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md) before changing training options.
 
-For the current broad ecosystem experiment, use [`cenere-multistack-v3`](../curriculum/datasets/cenere-multistack-v3/README.md). It combines v1's 31-track seed, ten source-linked checked programs, and 26 technology-specific explanations. Compare the base and adapter on the same held-out prompts; checked reference programs and lower loss do not guarantee improved general coding ability.
+For the current correction and code-generation experiment, use [`cenere-multistack-v4`](../curriculum/datasets/cenere-multistack-v4/README.md). It adds fact corrections based on observed model errors and a second executable task across ten languages. Compare base and adapter on the same held-out rubric and executable checks; lower loss does not establish improved behavior.
 
 The MLX server can serve an adapter at startup, without fusing another model copy. Stop the existing server before using the same port, or use a second port for a side-by-side evaluation:
 

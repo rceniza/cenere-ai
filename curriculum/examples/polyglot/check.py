@@ -20,6 +20,15 @@ CASES = [
     ("1,not-a-number", 2, ""),
     ("2147483648", 2, ""),
 ]
+SUM_CASES = [
+    ("10 -3", 0, "7\n"),
+    ("-2147483648 0", 0, "-2147483648\n"),
+    ("2147483647 1", 2, ""),
+    ("2147483648 0", 2, ""),
+    ("1 x", 2, ""),
+    ("1 2 3", 2, ""),
+    ("", 2, ""),
+]
 
 
 def available(command: str) -> bool:
@@ -94,6 +103,55 @@ def main() -> int:
                     failures += 1
                 else:
                     print(f"{language} case {index}: PASS")
+
+            sum_sources = {
+                "rust": "rust/sum_int32.rs", "c": "c/sum_int32.c", "cpp": "cpp/sum_int32.cpp",
+                "python": "python/sum_int32.py", "node": "node/sum_int32.js",
+                "typescript": "typescript/sum_int32.ts", "php": "php/sum_int32.php",
+                "go": "go/sum_int32.go", "java": "java/SumInt32.java",
+            }
+            source_path = ROOT / sum_sources[language]
+            if language == "rust":
+                binary = temp / "sum-rust"
+                build = ["rustc", "--edition=2021", str(source_path), "-o", str(binary)]
+            elif language == "c":
+                binary = temp / "sum-c"
+                build = ["cc", "-std=c11", "-Wall", "-Wextra", "-Werror", str(source_path), "-o", str(binary)]
+            elif language == "cpp":
+                binary = temp / "sum-cpp"
+                build = ["c++", "-std=c++17", "-Wall", "-Wextra", "-Werror", str(source_path), "-o", str(binary)]
+            elif language == "go":
+                binary = temp / "sum-go"
+                build = ["go", "build", "-o", str(binary), str(source_path)]
+            elif language == "java":
+                build = ["javac", "-d", str(temp), str(source_path)]
+                binary = None
+            else:
+                build = None
+                binary = None
+            if build:
+                result = run(build)
+                if result.returncode:
+                    print(f"{language} sum build: FAIL\n{result.stderr}")
+                    failures += 1
+                    continue
+            if binary:
+                sum_command = [str(binary)]
+            elif language == "java":
+                sum_command = ["java", "-cp", str(temp), "SumInt32"]
+            elif language == "php":
+                sum_command = ["php", str(source_path)]
+            elif language in {"node", "typescript"}:
+                sum_command = ["node", *(["--experimental-strip-types"] if language == "typescript" else []), str(source_path)]
+            else:
+                sum_command = ["python3", str(source_path)]
+            for index, (input_text, expected_status, expected_stdout) in enumerate(SUM_CASES, 1):
+                result = run(sum_command, input_text=input_text + "\n")
+                if result.returncode != expected_status or result.stdout != expected_stdout:
+                    print(f"{language} sum case {index}: FAIL (exit={result.returncode}, stdout={result.stdout!r}, stderr={result.stderr.strip()!r})")
+                    failures += 1
+                else:
+                    print(f"{language} sum case {index}: PASS")
     return 1 if failures else 0
 
 

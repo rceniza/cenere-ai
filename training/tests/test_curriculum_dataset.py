@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "curriculum/datasets/cenere-multistack-v1"
 DATA_V2 = ROOT / "curriculum/datasets/cenere-multistack-v2"
 DATA_V3 = ROOT / "curriculum/datasets/cenere-multistack-v3"
+DATA_V4 = ROOT / "curriculum/datasets/cenere-multistack-v4"
 SPEC = importlib.util.spec_from_file_location(
     "multistack_v1", ROOT / "curriculum/datasets/build_multistack_v1.py"
 )
@@ -26,6 +27,9 @@ SPEC_CODE_EVAL.loader.exec_module(CODE_EVAL)
 SPEC_V3 = importlib.util.spec_from_file_location("multistack_v3", ROOT / "curriculum/datasets/build_multistack_v3.py")
 BUILDER_V3 = importlib.util.module_from_spec(SPEC_V3)
 SPEC_V3.loader.exec_module(BUILDER_V3)
+SPEC_V4 = importlib.util.spec_from_file_location("multistack_v4", ROOT / "curriculum/datasets/build_multistack_v4.py")
+BUILDER_V4 = importlib.util.module_from_spec(SPEC_V4)
+SPEC_V4.loader.exec_module(BUILDER_V4)
 
 
 def read_jsonl(path):
@@ -153,6 +157,43 @@ class MultistackDatasetTests(unittest.TestCase):
         self.assertFalse(train_prompts & valid_prompts)
         self.assertFalse(train_prompts & eval_prompts)
         self.assertFalse(valid_prompts & eval_prompts)
+
+    def test_correction_dataset_is_reproducible_and_keeps_code_evaluation_held_out(self):
+        rendered = BUILDER_V4.render()
+        for filename, content in rendered.items():
+            self.assertEqual((DATA_V4 / filename).read_bytes(), content, filename)
+        train = read_jsonl(DATA_V4 / "train.jsonl")
+        valid = read_jsonl(DATA_V4 / "valid.jsonl")
+        evaluation = read_jsonl(DATA_V4 / "eval.jsonl")
+        code_eval = read_jsonl(DATA_V4 / "code-eval.jsonl")
+        self.assertEqual(len(train), 149)
+        self.assertEqual(len(valid), 47)
+        self.assertEqual(len(evaluation), 59)
+        self.assertEqual(len(code_eval), 20)
+        train_prompts = {row["messages"][0]["content"] for row in train}
+        self.assertFalse(train_prompts & {row["messages"][0]["content"] for row in valid})
+        self.assertFalse(train_prompts & {row["prompt"] for row in evaluation})
+        self.assertFalse(train_prompts & {row["prompt"] for row in code_eval})
+        sum_rows = [row for row in code_eval if row.get("exercise") == "sum-int32"]
+        self.assertEqual(len(sum_rows), 10)
+        self.assertEqual({row["language"] for row in sum_rows},
+                         {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go", "java"})
+
+    def test_sum_int32_reference_programs_pass_executable_evaluator(self):
+        sources = {
+            "c": ("c/sum_int32.c", "c"), "cpp": ("cpp/sum_int32.cpp", "cpp"),
+            "php": ("php/sum_int32.php", "php"), "javascript": ("node/sum_int32.js", "javascript"),
+            "typescript": ("typescript/sum_int32.ts", "typescript"), "nodejs": ("node/sum_int32.js", "javascript"),
+            "python": ("python/sum_int32.py", "python"), "rust": ("rust/sum_int32.rs", "rust"),
+            "go": ("go/sum_int32.go", "go"), "java": ("java/SumInt32.java", "java"),
+        }
+        for language, (relative, fence) in sources.items():
+            with self.subTest(language=language):
+                answer = f"```{fence}\n{(ROOT / 'curriculum/examples/polyglot' / relative).read_text()}\n```"
+                failures = CODE_EVAL.check({"language": language, "exercise": "sum-int32"}, answer)
+                if language == "java" and failures == ["toolchain unavailable: java runtime"]:
+                    self.skipTest("Java runtime is not installed")
+                self.assertEqual(failures, [])
 
     def test_new_ecosystem_tracks_link_to_official_documentation(self):
         catalog = json.loads((ROOT / "curriculum/catalog.json").read_text())

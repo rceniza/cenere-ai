@@ -19,6 +19,15 @@ CASES = [
     ("1,not-a-number\n", 2, ""),
     ("2147483648\n", 2, ""),
 ]
+SUM_CASES = [
+    ("10 -3\n", 0, "7\n"),
+    ("-2147483648 0\n", 0, "-2147483648\n"),
+    ("2147483647 1\n", 2, ""),
+    ("2147483648 0\n", 2, ""),
+    ("1 x\n", 2, ""),
+    ("1 2 3\n", 2, ""),
+    ("\n", 2, ""),
+]
 LANGUAGES = {
     "c": ("cc", "main.c", ["cc", "-std=c11", "-Wall", "-Wextra", "-Werror"]),
     "cpp": ("c++", "main.cpp", ["c++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]),
@@ -63,8 +72,15 @@ def check(case: dict, answer: str) -> list[str]:
     command_name, filename, compiler = LANGUAGES[language]
     if shutil.which(command_name) is None:
         return [f"toolchain unavailable: {command_name}"]
-    if language == "java" and shutil.which("java") is None:
-        return ["toolchain unavailable: java runtime"]
+    if language == "java":
+        java = shutil.which("java")
+        if java is None:
+            return ["toolchain unavailable: java runtime"]
+        try:
+            if subprocess.run([java, "-version"], capture_output=True, timeout=5, check=False).returncode:
+                return ["toolchain unavailable: java runtime"]
+        except (OSError, subprocess.TimeoutExpired):
+            return ["toolchain unavailable: java runtime"]
     source = fenced_code(answer, language)
     if not source:
         return ["missing fenced source code"]
@@ -72,6 +88,12 @@ def check(case: dict, answer: str) -> list[str]:
     failures = []
     with tempfile.TemporaryDirectory(prefix=f"cenere-code-{language}-") as temp_name:
         temp = Path(temp_name)
+        exercise = case.get("exercise", "normalize-list")
+        if exercise == "sum-int32":
+            sum_files = {"c": "sum_int32.c", "cpp": "sum_int32.cpp", "php": "sum_int32.php", "javascript": "sum_int32.js", "typescript": "sum_int32.ts", "nodejs": "sum_int32.js", "python": "sum_int32.py", "rust": "sum_int32.rs", "go": "sum_int32.go", "java": "SumInt32.java"}
+            filename = sum_files[language]
+        elif exercise != "normalize-list":
+            return [f"unsupported exercise {exercise}"]
         source_path = temp / filename
         source_path.write_text(source + "\n", encoding="utf-8")
         if language in {"c", "cpp", "rust", "go", "java"}:
@@ -85,7 +107,8 @@ def check(case: dict, answer: str) -> list[str]:
             result = subprocess.run(build, text=True, capture_output=True, timeout=60, check=False)
             if result.returncode:
                 return ["compile failed: " + result.stderr[-1200:]]
-            command = ["java", "-cp", str(temp), "Main"] if language == "java" else [str(binary)]
+            java_class = "SumInt32" if exercise == "sum-int32" else "Main"
+            command = ["java", "-cp", str(temp), java_class] if language == "java" else [str(binary)]
         elif language == "php":
             command = ["php", str(source_path)]
         elif language in {"javascript", "nodejs"}:
@@ -95,7 +118,8 @@ def check(case: dict, answer: str) -> list[str]:
         else:
             command = ["python3", str(source_path)]
 
-        for index, (stdin, expected_code, expected_stdout) in enumerate(CASES, 1):
+        test_cases = SUM_CASES if exercise == "sum-int32" else CASES
+        for index, (stdin, expected_code, expected_stdout) in enumerate(test_cases, 1):
             try:
                 result = run_case(command, stdin)
             except subprocess.TimeoutExpired:

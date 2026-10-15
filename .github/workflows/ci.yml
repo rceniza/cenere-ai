@@ -51,6 +51,9 @@ jobs:
       - name: Verify ecosystem training data is reproducible
         run: python3 curriculum/datasets/build_multistack_v3.py --check
 
+      - name: Verify correction and coding training data is reproducible
+        run: python3 curriculum/datasets/build_multistack_v4.py --check
+
       - name: Compile and run polyglot exercise
         run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript,java
 
