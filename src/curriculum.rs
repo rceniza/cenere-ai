@@ -2,9 +2,56 @@
 use anyhow::{Context, Result};
 
 const DATA: &str = include_str!("../curriculum/catalog.json");
+const DEVOPS_WALKTHROUGHS: &str = include_str!("../curriculum/devops_walkthroughs.json");
 
 pub fn catalog() -> Result<serde_json::Value> {
-    serde_json::from_str(DATA).context("parsing embedded curriculum catalog")
+    let mut catalog: serde_json::Value =
+        serde_json::from_str(DATA).context("parsing embedded curriculum catalog")?;
+    let walkthroughs: serde_json::Value =
+        serde_json::from_str(DEVOPS_WALKTHROUGHS).context("parsing curated DevOps walkthroughs")?;
+    for (track_id, track_steps) in walkthroughs
+        .as_object()
+        .context("DevOps walkthrough map must be an object")?
+    {
+        let track = catalog["tracks"]
+            .as_array_mut()
+            .and_then(|tracks| {
+                tracks
+                    .iter_mut()
+                    .find(|track| track["id"].as_str() == Some(track_id.as_str()))
+            })
+            .with_context(|| format!("walkthrough references unknown track '{track_id}'"))?;
+        for (stage_key, steps) in track_steps
+            .as_object()
+            .context("DevOps track walkthrough must be an object")?
+        {
+            if stage_key == "source" {
+                continue;
+            }
+            let (level, number) = stage_key
+                .split_once(':')
+                .context("walkthrough key must be '<level>:<lesson-number>'")?;
+            let number = number
+                .parse::<usize>()
+                .context("walkthrough lesson number must be a positive integer")?;
+            anyhow::ensure!(number > 0, "walkthrough lesson numbers start at one");
+            let stage = track["stages"]
+                .as_array_mut()
+                .and_then(|stages| stages.iter_mut().find(|stage| stage["level"] == level))
+                .with_context(|| format!("walkthrough references missing stage '{level}'"))?;
+            let lesson = stage["lessons"]
+                .as_array_mut()
+                .and_then(|lessons| lessons.get_mut(number - 1))
+                .with_context(|| format!("walkthrough references missing lesson {number}"))?;
+            anyhow::ensure!(
+                steps.as_array().is_some_and(|steps| steps.len() >= 3),
+                "walkthroughs must contain at least three ordered steps"
+            );
+            lesson["steps"] = steps.clone();
+            lesson["official_reference"] = track_steps["source"].clone();
+        }
+    }
+    Ok(catalog)
 }
 
 pub fn print(track_id: Option<&str>) -> Result<()> {
@@ -168,6 +215,11 @@ pub fn lesson_prompt(track_id: &str, level: &str, lesson_number: usize) -> Resul
             prompt.push_str(&format!("{}. {}\n", index + 1, step.as_str().unwrap_or("")));
         }
     }
+    if let Some(source) = lesson["official_reference"].as_str() {
+        prompt.push_str(&format!(
+            "\n\nOfficial reference for this lab: {source}\nUse the current version-matched documentation and distinguish verified behavior from assumptions."
+        ));
+    }
     if let Some(reference) = lesson["reference"].as_str() {
         let source = reference_source(reference)?;
         let language = lesson["language"].as_str().unwrap_or("text");
@@ -232,6 +284,47 @@ mod tests {
             .unwrap()
             .contains("Rendering and hydration Profile a large list, compare rerender"));
         assert!(lesson_search_query("unknown", "beginner", 1).is_err());
+    }
+
+    #[test]
+    fn devops_tracks_have_source_linked_walkthroughs_at_each_level() {
+        let catalog = catalog().unwrap();
+        let walkthroughs: serde_json::Value = serde_json::from_str(DEVOPS_WALKTHROUGHS).unwrap();
+        assert_eq!(walkthroughs.as_object().unwrap().len(), 10);
+        for (track_id, guidance) in walkthroughs.as_object().unwrap() {
+            let track = catalog["tracks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|track| track["id"].as_str() == Some(track_id.as_str()))
+                .unwrap();
+            let source = guidance["source"].as_str().unwrap();
+            assert!(source.starts_with("https://"), "{track_id}: {source}");
+            for level in ["beginner", "intermediate", "advanced"] {
+                let selected: Vec<_> = track["stages"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .find(|stage| stage["level"] == level)
+                    .unwrap()["lessons"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .filter(|lesson| lesson.get("official_reference").is_some())
+                    .collect();
+                assert_eq!(selected.len(), 1, "{track_id} / {level}");
+                let steps = selected[0]["steps"].as_array().unwrap();
+                assert!(steps.len() >= 4, "{track_id} / {level}");
+                assert!(steps.iter().all(|step| {
+                    step.as_str()
+                        .is_some_and(|step| step.split_whitespace().count() >= 5)
+                }));
+            }
+        }
+        let prompt = lesson_prompt("kubernetes", "advanced", 3).unwrap();
+        assert!(prompt
+            .contains("https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"));
+        assert!(prompt.contains("Evict a test Pod"));
     }
 
     #[test]

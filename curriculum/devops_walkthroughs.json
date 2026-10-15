@@ -1,0 +1,212 @@
+{
+  "git-linux-shell": {
+    "source": "https://git-scm.com/book/en/v2",
+    "beginner:3": [
+      "Start in a disposable repository and check `git status --short` so you know which files are already changed.",
+      "Create a named feature branch, make one small change, and stage only the intended path.",
+      "Inspect both `git diff --cached` and `git diff` before committing; explain which changes will enter the commit.",
+      "Commit the change, inspect `git show --stat --oneline HEAD`, and practice restoring a staged file without discarding its working-tree edits."
+    ],
+    "intermediate:3": [
+      "Create a temporary directory containing filenames with spaces and a command that exits non-zero.",
+      "Write a shell pipeline that handles filenames as data, quotes expansions, and propagates upstream failures with the shell's pipeline-failure option.",
+      "Send diagnostics to stderr and reserve stdout for machine-readable results.",
+      "Run the pipeline against the spaced filenames and failing command; verify the exit status and that no file was skipped or split."
+    ],
+    "advanced:3": [
+      "Write the change plan with preflight checks, required identity, expected health signal, rollback command, and an owner for each action.",
+      "Run the plan in a disposable environment and record the known-good state before changing it.",
+      "Simulate a failed health check, stop progression, execute the documented rollback, and confirm the service returns to the known-good state.",
+      "Review shell quoting, least privilege, logs, and evidence retention; do not place secrets in command history or output."
+    ]
+  },
+  "docker": {
+    "source": "https://docs.docker.com/build/building/multi-stage/",
+    "beginner:3": [
+      "Create a small API and database in a disposable Compose project with a named database volume.",
+      "Bind the API port to loopback for local use and configure the API to reach the database by its Compose service name.",
+      "Create a record, recreate the database container, and query the record again to check persistence.",
+      "Remove the project and its named volume only after confirming the test data is disposable."
+    ],
+    "intermediate:3": [
+      "Build the application in a builder stage and copy only its runtime artifact into the final stage.",
+      "Create an unprivileged runtime user and identify which application paths need write access.",
+      "Build and run the image; inspect its user, size, health check, and writable paths.",
+      "Test startup, a read-only filesystem where supported, and a health failure; compare the final image contents with the single-stage baseline."
+    ],
+    "advanced:3": [
+      "Pin base images by digest and inventory packages and layers included in the final image.",
+      "Run as non-root, drop unnecessary capabilities, and enable a read-only root filesystem where the application permits it.",
+      "Pass build secrets through a supported secret mount and verify they do not appear in image history or layers.",
+      "Scan the image, test required writable locations and health behavior, and document residual findings before release."
+    ]
+  },
+  "cicd": {
+    "source": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication",
+    "beginner:3": [
+      "Add a pull-request workflow with separate format, test, and build steps that run without deployment credentials.",
+      "Make each step fail the job when its command returns non-zero, and upload only artifacts needed for later inspection.",
+      "Run the workflow on a clean branch and confirm the expected checks appear on the pull request.",
+      "Introduce a failing test in a disposable branch and verify the workflow blocks the check from passing."
+    ],
+    "intermediate:3": [
+      "Build a versioned artifact once and record its digest and build run identifier.",
+      "Deploy that exact artifact to a test environment using environment-scoped credentials and least-privilege job permissions.",
+      "Promote the same digest after the required checks and approval; do not rebuild from a moving tag during promotion.",
+      "Simulate a failed health check and verify rollback selects the previously recorded artifact digest."
+    ],
+    "advanced:3": [
+      "Define user-facing canary metrics, sample duration, minimum traffic, and an explicit rollback threshold before deployment.",
+      "Route a small share of traffic to the candidate artifact and compare its error rate and latency with the control.",
+      "Exercise both a healthy rollout and a seeded regression; confirm the gate advances only the healthy release and rolls back the regression.",
+      "Record immutable artifact identity, workflow identity, decision evidence, and rollback outcome for later audit."
+    ]
+  },
+  "kubernetes": {
+    "source": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+    "beginner:3": [
+      "Deploy a stateless sample and inspect its Pods, events, and logs before exposing it.",
+      "Add a Service selector that matches the intended Pod labels and test DNS and routing from a temporary in-cluster client.",
+      "Configure readiness and liveness probes from the application's real health behavior; avoid using a slow dependency as a liveness check.",
+      "Delay startup and then make the process unhealthy; verify readiness controls traffic and liveness restarts only the failed process."
+    ],
+    "intermediate:3": [
+      "Set CPU and memory requests from measured needs and limits from an explicit resource policy.",
+      "Store non-secret configuration separately from secrets and verify the application rejects an invalid configuration safely.",
+      "Roll out a new image and follow rollout status, events, and readiness while the old ReplicaSet remains available.",
+      "Introduce a bad version in a disposable namespace, detect the failed rollout, and use rollout history to restore the known-good version."
+    ],
+    "advanced:3": [
+      "List node, zone, and dependency failure domains, then choose topology spread and disruption-budget constraints for the service's availability target.",
+      "Write network policies from required source-to-destination flows and verify the selected CNI enforces them.",
+      "Evict a test Pod and simulate a failed dependency to check disruption behavior, scheduling, and recovery.",
+      "Confirm the policy preserves required traffic while denying an unlisted path; document any CNI or cluster-version assumptions."
+    ]
+  },
+  "kafka-redpanda": {
+    "source": "https://kafka.apache.org/documentation/",
+    "beginner:3": [
+      "Create a local topic with a small fixed partition count and publish records using a stable entity key.",
+      "Start one consumer group, inspect assignments and offsets, then start another consumer in the same group.",
+      "Compare ordering for records with the same key and observe which partitions each consumer owns.",
+      "Add more consumers than partitions and explain why extra consumers do not create additional partition-level parallelism."
+    ],
+    "intermediate:3": [
+      "Define the consumer's processing contract and choose when offsets are committed relative to durable downstream writes.",
+      "Make the downstream write idempotent using an event identifier, and bound retries for transient failures.",
+      "Route a permanent poison record to a dead-letter topic with the original key, payload reference, and failure reason.",
+      "Crash a consumer between processing and offset commit, replay the record, and verify no duplicate business effect occurs."
+    ],
+    "advanced:3": [
+      "Document the old and new event schemas and identify which producers and consumers overlap during rollout.",
+      "Check the compatibility mode supported by the schema registry and test old-reader/new-writer and new-reader/old-writer combinations required by the rollout.",
+      "Set an offset-commit policy that matches the processing guarantee and test a crash around the commit boundary.",
+      "Roll out in a disposable cluster, inspect lag and failures, and define the rollback path before changing production consumers."
+    ]
+  },
+  "caching": {
+    "source": "https://redis.io/docs/latest/develop/use/patterns/cache-aside/",
+    "beginner:3": [
+      "List every input that changes the read result and include each one in the cache key namespace.",
+      "On a cache miss, read from the source of truth, store the result with a bounded TTL, and return the value.",
+      "Change source data, wait for expiry, and verify the next read reloads fresh data.",
+      "Test two tenants or users with different result visibility and confirm their entries cannot collide."
+    ],
+    "intermediate:3": [
+      "Choose a write-through or explicit invalidation rule and state the maximum acceptable staleness.",
+      "Add request coalescing or another bounded strategy for simultaneous misses on a hot key.",
+      "Run concurrent cold-key requests while changing the source record and observe source load and returned versions.",
+      "Verify invalidation reaches all relevant keys and that failures do not leave incorrect data indefinitely."
+    ],
+    "advanced:3": [
+      "Set a memory bound, eviction policy, connection timeout, and cache-failure behavior from measured workload needs.",
+      "Choose whether stale values may be served during an outage and define the maximum stale age explicitly.",
+      "Simulate cache unavailability and recovery while generating traffic; observe fallback load and request amplification.",
+      "Verify the circuit breaker, timeout, and recovery path avoid a thundering herd and do not violate data-safety rules."
+    ]
+  },
+  "observability-sre": {
+    "source": "https://opentelemetry.io/docs/concepts/signals/",
+    "beginner:3": [
+      "Generate a request ID at the edge and propagate it through the service call chain.",
+      "Emit structured start, outcome, and error records with the request ID and useful operation fields.",
+      "Exclude credentials, tokens, and unnecessary personal data from logs.",
+      "Trace one successful and one failing request across service logs and verify the records can be correlated."
+    ],
+    "intermediate:3": [
+      "Define an availability SLI from successful eligible requests and choose a time window and target.",
+      "Instrument request counts, latency, and errors with bounded labels; add a trace across the service boundary.",
+      "Calculate the error budget from the SLI and define an alert on sustained burn rather than a noisy single event.",
+      "Generate a controlled failure and check the metric, trace, alert, and remaining budget agree with the observed request outcomes."
+    ],
+    "advanced:3": [
+      "Choose an alert tied to a user-facing SLO and state the symptom, threshold, evaluation window, and owner.",
+      "Link a runbook with safe diagnostics, escalation criteria, and recovery verification steps.",
+      "Inject a controlled failure and have another person follow the alert and runbook without hidden context.",
+      "Record where the runbook was ambiguous, improve it, and repeat the exercise to verify the intended recovery."
+    ]
+  },
+  "security": {
+    "source": "https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html",
+    "beginner:3": [
+      "Create two users, one private object per user, and a route that reads the object by identifier.",
+      "Require authentication and check object ownership or an explicit sharing grant on every read and write.",
+      "Test an anonymous request, the owning user, and a different authenticated user against the same object ID.",
+      "Verify denials reveal no private object data and that authorization is enforced on the server, not only in the UI."
+    ],
+    "intermediate:3": [
+      "List allowed outbound destinations and decide how DNS resolution, redirects, and private address ranges are handled.",
+      "Validate the parsed URL and resolved destination at connection time; do not rely on a string prefix check.",
+      "Test loopback, link-local, private network, alternate numeric IP forms, and a public URL redirecting to a private address.",
+      "Verify secrets are provided through the runtime secret store and denied destinations never receive a request."
+    ],
+    "advanced:3": [
+      "Inventory assets, actors, entry points, trust boundaries, and sensitive data flows for one service.",
+      "Write abuse cases for each boundary and rank them by impact and likelihood before selecting mitigations.",
+      "Assign each mitigation an owner, a verification method, and a response action if prevention fails.",
+      "Run a tabletop for one vulnerability report and verify triage, containment, credential rotation, evidence handling, and recovery responsibilities."
+    ]
+  },
+  "cloud-production": {
+    "source": "https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html",
+    "beginner:3": [
+      "Create a deployment identity scoped to one test service and the minimum required actions.",
+      "Attempt the intended deployment and confirm it succeeds without granting account-wide administrative access.",
+      "Attempt to read an unrelated secret and modify an unrelated service; both actions should be denied.",
+      "Review the audit event for allowed and denied actions and remove the test identity after the exercise."
+    ],
+    "intermediate:3": [
+      "Select a non-production dataset and define recovery point and recovery time objectives before taking a backup.",
+      "Restore into an isolated environment using the documented procedure and record elapsed recovery time and recovered data age.",
+      "Run application-level integrity checks and representative reads against the restored data.",
+      "Compare measured recovery with the objectives and update the runbook for any missing credential, dependency, or ordering step."
+    ],
+    "advanced:3": [
+      "Estimate normal and peak demand, dependency quotas, regional capacity, and the cost of each redundancy option.",
+      "Define graceful degradation for a regional dependency failure and identify state that must be reconciled after recovery.",
+      "Run a controlled failover exercise and record user-visible errors, recovery time, and data divergence.",
+      "Compare results and cost with the service objectives; revise capacity limits and recovery steps before a production drill."
+    ]
+  },
+  "ai-model-ops": {
+    "source": "https://github.com/ml-explore/mlx-examples/tree/main/llms",
+    "beginner:3": [
+      "Record the base model, quantization, prompt, generation limit, hardware, and baseline latency and memory for a small fixed prompt set.",
+      "Run a concise prompt and an intentionally oversized prompt; compare token use, latency, truncation, and answer quality.",
+      "Store a reviewed fact in SQLite and retrieve it with both matching and paraphrased queries.",
+      "Delete the stored fact and verify it is no longer retrieved; distinguish this memory change from modifying model weights."
+    ],
+    "intermediate:3": [
+      "Create separate training, validation, and held-out test files, grouping related prompts so paraphrases cannot leak across splits.",
+      "Run the exact same evaluation prompts, endpoint settings, and scoring logic against base and candidate checkpoints.",
+      "Inspect failed examples manually and add only reviewed corrections to a future training split.",
+      "Keep a fresh test set untouched and report per-case outcomes, data provenance, evaluator limitations, and resource use."
+    ],
+    "advanced:3": [
+      "Set promotion gates for held-out quality, executable correctness, regression rate, memory, and latency before training.",
+      "Train a candidate from a versioned dataset and preserve the base checkpoint and adapter metadata for rollback.",
+      "Run the candidate through the promotion suite and reject it if any required gate regresses or fails.",
+      "If promoted, retain a rollback command and monitor the same task families for quality drift; never train on the final test set and reuse it as an unseen score."
+    ]
+  }
+}
