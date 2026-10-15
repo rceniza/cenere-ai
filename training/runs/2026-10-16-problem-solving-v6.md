@@ -23,3 +23,5 @@ On the four training feedback prompts, both base and adapter passed Python, Java
 ## Decision and limits
 
 Keep the v6 adapter unpromoted and the base checkpoint as default. This four-case holdout is a narrow diagnostic, not a broad programming or reasoning score. The test-feedback data is too small to establish generalization. Expand independently reviewed examples, investigate why the trained adapter did not change greedy outputs, and require fresh executable tasks before another promotion decision.
+
+A paired serving check requested token log probabilities for the first training feedback prompt. Base and adapter returned the same 68 generated tokens; one token's log probability changed, and none of the top-three token sets changed. This confirms the adapter was loaded and affected the distribution, but its effect was too small to alter the greedy output on that prompt.
