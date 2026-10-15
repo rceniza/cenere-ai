@@ -139,6 +139,20 @@ pub fn reference_language(
     Ok(lesson["language"].as_str().map(str::to_owned))
 }
 
+pub fn lesson_search_query(track_id: &str, level: &str, lesson_number: usize) -> Result<String> {
+    let catalog = catalog()?;
+    let (track, stage, lesson) = lookup_lesson(&catalog, track_id, level, lesson_number)?;
+    let practice = lesson["practice"].as_str().unwrap_or("");
+    let practice_excerpt: String = practice.chars().take(160).collect();
+    Ok(format!(
+        "{} {} {} {} official documentation",
+        track["title"].as_str().unwrap_or(track_id),
+        stage["level"].as_str().unwrap_or(level),
+        lesson["title"].as_str().unwrap_or("programming lesson"),
+        practice_excerpt
+    ))
+}
+
 pub fn lesson_prompt(track_id: &str, level: &str, lesson_number: usize) -> Result<String> {
     let catalog = catalog()?;
     let (track, stage, lesson) = lookup_lesson(&catalog, track_id, level, lesson_number)?;
@@ -183,6 +197,19 @@ mod tests {
             assert_eq!(stages[0]["level"], "beginner");
             assert_eq!(stages[1]["level"], "intermediate");
             assert_eq!(stages[2]["level"], "advanced");
+            for stage in stages {
+                let lessons = stage["lessons"].as_array().unwrap();
+                assert!(
+                    lessons.len() >= 3,
+                    "{} / {} needs at least three lessons",
+                    track["id"],
+                    stage["level"]
+                );
+                for lesson in lessons {
+                    assert!(!lesson["title"].as_str().unwrap_or("").trim().is_empty());
+                    assert!(!lesson["practice"].as_str().unwrap_or("").trim().is_empty());
+                }
+            }
         }
     }
 
@@ -201,6 +228,10 @@ mod tests {
         assert!(lesson_prompt("rust", "expert", 1).is_err());
         assert!(lesson_prompt("rust", "beginner", 0).is_err());
         assert!(lesson_prompt("rust", "beginner", 99).is_err());
+        assert!(lesson_search_query("react", "advanced", 3)
+            .unwrap()
+            .contains("Rendering and hydration Profile a large list, compare rerender"));
+        assert!(lesson_search_query("unknown", "beginner", 1).is_err());
     }
 
     #[test]

@@ -18,6 +18,10 @@
             {
               "title": "Functions and decomposition",
               "practice": "Split a text statistics tool into small functions with clear inputs and outputs."
+            },
+            {
+              "title": "Data formats and validation",
+              "practice": "Build a command-line JSON Lines reader that validates required fields and reports the input line on errors. Test empty, valid, malformed, and partially valid files."
             }
           ]
         },
@@ -32,6 +36,10 @@
             {
               "title": "Testing and debugging",
               "practice": "Fix seeded defects using a failing test, then add regression tests."
+            },
+            {
+              "title": "Property-based testing",
+              "practice": "State invariants for a collection operation, generate boundary and random inputs, and save each discovered failure as a deterministic regression test."
             }
           ]
         },
@@ -46,6 +54,10 @@
             {
               "title": "Concurrency and architecture",
               "practice": "Design a bounded worker queue and test cancellation and failure cases."
+            },
+            {
+              "title": "Bounded worker queues",
+              "practice": "Design a worker pool with fixed queue capacity, cancellation, and graceful shutdown. Test saturation, worker failure, and shutdown with queued work."
             }
           ]
         }
@@ -80,6 +92,10 @@
               ],
               "reference": "examples/polyglot/c/main.c",
               "language": "c"
+            },
+            {
+              "title": "Safe dynamic buffers",
+              "practice": "Read an arbitrarily long line into a growing buffer. Preserve the original pointer on realloc failure and check capacity arithmetic for overflow."
             }
           ]
         },
@@ -94,6 +110,10 @@
             {
               "title": "Headers and compiler warnings",
               "practice": "Split a utility into .h/.c files and compile with strict warnings."
+            },
+            {
+              "title": "File errors and cleanup",
+              "practice": "Write a file-processing function that distinguishes EOF from read errors and closes resources on every exit path. Test an empty file and an unreadable path."
             }
           ]
         },
@@ -108,6 +128,10 @@
             {
               "title": "Sanitizers and performance",
               "practice": "Find and fix memory errors with address/undefined sanitizers."
+            },
+            {
+              "title": "Partial socket writes",
+              "practice": "Implement a bounded TCP response loop that handles partial sends, interrupted calls, disconnects, and cleanup. Test a client that closes mid-response."
             }
           ]
         }
@@ -142,6 +166,10 @@
               ],
               "reference": "examples/polyglot/cpp/main.cpp",
               "language": "cpp"
+            },
+            {
+              "title": "Input parsing and standard containers",
+              "practice": "Use std::string and std::vector to parse values, reject trailing junk, and test empty input, whitespace, and numeric overflow."
             }
           ]
         },
@@ -156,6 +184,10 @@
             {
               "title": "Templates and algorithms",
               "practice": "Use standard algorithms and implement a constrained generic helper."
+            },
+            {
+              "title": "RAII and exception safety",
+              "practice": "Refactor an owning resource wrapper to use RAII and explicit move semantics. Test early returns, moves, and cleanup after exceptions."
             }
           ]
         },
@@ -170,6 +202,10 @@
             {
               "title": "Profiling and ABI boundaries",
               "practice": "Profile a hot path and document a stable C-facing API."
+            },
+            {
+              "title": "Concurrent bounded queue",
+              "practice": "Implement a producer-consumer queue with a mutex, condition variables, and defined close semantics. Test saturation and shutdown races."
             }
           ]
         }
@@ -191,6 +227,10 @@
             {
               "title": "Classes and nullable values",
               "practice": "Model a library catalog with nullable reference checks."
+            },
+            {
+              "title": "Nullable data and LINQ",
+              "practice": "Load records with nullable fields, validate before grouping with LINQ, and test missing values and duplicate keys."
             }
           ]
         },
@@ -205,6 +245,10 @@
             {
               "title": "Dependency injection and tests",
               "practice": "Separate a service from storage and test it with a fake."
+            },
+            {
+              "title": "ASP.NET endpoint testing",
+              "practice": "Build a minimal API endpoint with request validation and dependency injection. Add integration tests for valid, invalid, and missing resources."
             }
           ]
         },
@@ -219,6 +263,10 @@
             {
               "title": "Diagnostics and performance",
               "practice": "Add structured logs and traces, then profile an endpoint."
+            },
+            {
+              "title": "Async cancellation",
+              "practice": "Fan out independent .NET requests with CancellationToken and bounded timeouts. Test cancellation, one dependency failure, and partial results."
             }
           ]
         }
@@ -253,6 +301,10 @@
               ],
               "reference": "examples/polyglot/php/main.php",
               "language": "php"
+            },
+            {
+              "title": "Form validation and escaping",
+              "practice": "Validate submitted fields on the server and render values with context-appropriate escaping. Test missing values and markup-like input."
             }
           ]
         },
@@ -267,6 +319,10 @@
             {
               "title": "PDO and database transactions",
               "practice": "Build CRUD with prepared statements and rollback tests."
+            },
+            {
+              "title": "API boundary and database transaction",
+              "practice": "Check content type, payload size, and field types before a PDO transaction. Test status codes and verify invalid requests cause no writes."
             }
           ]
         },
@@ -281,6 +337,10 @@
             {
               "title": "Workers and operations",
               "practice": "Add a retry-safe background job and monitor failures."
+            },
+            {
+              "title": "Retry-safe job handler",
+              "practice": "Use an idempotency key, bounded exponential backoff, and dead-letter path. Test duplicate delivery and a crash after a side effect."
             }
           ]
         }
@@ -315,6 +375,10 @@
               ],
               "reference": "examples/polyglot/node/main.js",
               "language": "javascript"
+            },
+            {
+              "title": "Accessible browser form",
+              "practice": "Create semantic form controls, associated error messages, keyboard support, and safe textContent rendering. Test empty, invalid, and valid submissions."
             }
           ]
         },
@@ -329,6 +393,10 @@
             {
               "title": "TypeScript modeling",
               "practice": "Represent API success/error states with discriminated unions."
+            },
+            {
+              "title": "Typed API response handling",
+              "practice": "Model success and error with a TypeScript discriminated union, validate unknown JSON at the boundary, and test missing and unexpected fields."
             }
           ]
         },
@@ -343,6 +411,10 @@
             {
               "title": "Performance and security",
               "practice": "Measure rendering and prevent unsafe HTML injection."
+            },
+            {
+              "title": "Race-safe data loading",
+              "practice": "Abort stale fetch requests and prevent older results overwriting newer state. Test rapid navigation and out-of-order responses."
             }
           ]
         }
@@ -377,6 +449,10 @@
               ],
               "reference": "examples/polyglot/node/main.js",
               "language": "javascript"
+            },
+            {
+              "title": "HTTP server and bounded JSON",
+              "practice": "Build a Node HTTP server with a health route and JSON route. Enforce content type and body size; test malformed and oversized requests."
             }
           ]
         },
@@ -391,6 +467,10 @@
             {
               "title": "Database and migrations",
               "practice": "Add a migration and transactional repository with tests."
+            },
+            {
+              "title": "Streams and backpressure",
+              "practice": "Process a large file through Node streams without loading it all into memory. Propagate errors and test a slow writable consumer."
             }
           ]
         },
@@ -405,6 +485,10 @@
             {
               "title": "Observability and load",
               "practice": "Add health checks, metrics, and a load-test baseline."
+            },
+            {
+              "title": "Graceful shutdown",
+              "practice": "Stop accepting traffic, drain in-flight work, close dependencies, and enforce a deadline. Test repeated signals and a stuck request."
             }
           ]
         }
@@ -426,6 +510,10 @@
             {
               "title": "State and events",
               "practice": "Create a form that validates input and reports errors accessibly."
+            },
+            {
+              "title": "Accessible stateful controls",
+              "practice": "Create a React counter with labeled increment and reset buttons. Test keyboard activation and rendered state."
             }
           ]
         },
@@ -440,6 +528,10 @@
             {
               "title": "Routing and component tests",
               "practice": "Add nested routes and tests for user-visible behavior."
+            },
+            {
+              "title": "Stable list keys and forms",
+              "practice": "Build a controlled form that adds and removes records by stable IDs. Test validation and editing after reordering."
             }
           ]
         },
@@ -454,6 +546,10 @@
             {
               "title": "Server rendering and security",
               "practice": "Audit hydration, escaping, and client/server data boundaries."
+            },
+            {
+              "title": "Rendering and hydration",
+              "practice": "Profile a large list, compare rerender and windowing strategies, and test server/client output for hydration mismatches."
             }
           ]
         }
@@ -475,6 +571,10 @@
             {
               "title": "CSS layout",
               "practice": "Create a responsive card layout without fixed page widths."
+            },
+            {
+              "title": "Landmarks and accessible names",
+              "practice": "Create a page with semantic landmarks, useful heading hierarchy, labeled controls, and alt text. Verify keyboard navigation and names."
             }
           ]
         },
@@ -489,6 +589,10 @@
             {
               "title": "Browser automation",
               "practice": "Test keyboard and mobile viewport flows in a browser."
+            },
+            {
+              "title": "Responsive layout testing",
+              "practice": "Build a grid/flex layout without horizontal overflow. Test narrow and wide viewports, zoom, and reduced motion."
             }
           ]
         },
@@ -503,6 +607,10 @@
             {
               "title": "Content security",
               "practice": "Configure a restrictive CSP and test safe rendering."
+            },
+            {
+              "title": "Performance and browser security",
+              "practice": "Measure render-blocking work and review unsafe HTML sinks and cross-origin requests. Record before/after metrics and verify behavior."
             }
           ]
         }
@@ -537,6 +645,10 @@
               ],
               "reference": "examples/polyglot/python/main.py",
               "language": "python"
+            },
+            {
+              "title": "CLI arguments and exit codes",
+              "practice": "Use argparse, helpful usage text, input validation, and meaningful exit codes. Test valid arguments, missing values, and malformed files."
             }
           ]
         },
@@ -551,6 +663,10 @@
             {
               "title": "Async and HTTP",
               "practice": "Fetch several endpoints with timeout and cancellation handling."
+            },
+            {
+              "title": "Typed data boundaries",
+              "practice": "Validate untrusted JSON before converting it to typed application data. Test missing, extra, and wrongly typed fields."
             }
           ]
         },
@@ -565,6 +681,10 @@
             {
               "title": "Profiling and concurrency",
               "practice": "Profile a workload and choose processes, threads, or async with evidence."
+            },
+            {
+              "title": "Async worker backpressure",
+              "practice": "Use asyncio with a bounded queue, cancellation, and correct task completion. Test producer backpressure and worker failure."
             }
           ]
         }
@@ -607,6 +727,10 @@
               ],
               "reference": "examples/polyglot/rust/main.rs",
               "language": "rust"
+            },
+            {
+              "title": "Borrowing and parser errors",
+              "practice": "Refactor a parser to return Result and borrow input when ownership is unnecessary. Test invalid values and returned lifetimes."
             }
           ]
         },
@@ -621,6 +745,10 @@
             {
               "title": "Modules and tests",
               "practice": "Split a library and binary; test edge cases and public behavior."
+            },
+            {
+              "title": "Typed library errors",
+              "practice": "Define a small error enum, preserve source errors, and convert them at the CLI boundary. Test each error variant."
             }
           ]
         },
@@ -635,6 +763,10 @@
             {
               "title": "Profiling and unsafe review",
               "practice": "Benchmark a hot path and document any unsafe invariant."
+            },
+            {
+              "title": "Async limits and shutdown",
+              "practice": "Design a Tokio service with bounded channels, cancellation, and graceful shutdown. Test queue saturation and task failure."
             }
           ]
         }
@@ -669,6 +801,10 @@
               ],
               "reference": "examples/polyglot/go/main.go",
               "language": "go"
+            },
+            {
+              "title": "Equivalent validation in Go and Java",
+              "practice": "Implement the same input validation in both languages using idiomatic errors. Test valid values, missing fields, and boundaries."
             }
           ]
         },
@@ -683,6 +819,10 @@
             {
               "title": "Concurrency",
               "practice": "Use goroutines/channels or executors/futures for bounded work."
+            },
+            {
+              "title": "Cancellation and cleanup",
+              "practice": "Propagate Go context cancellation and Java interruption through downstream work. Test timeouts and verify resources close."
             }
           ]
         },
@@ -697,6 +837,10 @@
             {
               "title": "Resilience",
               "practice": "Implement graceful shutdown, retries, and health probes."
+            },
+            {
+              "title": "Concurrency limits",
+              "practice": "Compare a bounded Go worker pool with Java ExecutorService. Define queue and shutdown behavior; test saturation and failures."
             }
           ]
         }
@@ -718,6 +862,10 @@
             {
               "title": "JSON validation",
               "practice": "Reject invalid fields and return consistent error objects."
+            },
+            {
+              "title": "Validation at API boundaries",
+              "practice": "Design a CRUD API with correct HTTP methods and distinct 400, 401, 404, and 409 outcomes. Write request/response tests."
             }
           ]
         },
@@ -732,6 +880,10 @@
             {
               "title": "Transactions and migrations",
               "practice": "Implement a multi-step update atomically."
+            },
+            {
+              "title": "Pagination and idempotency",
+              "practice": "Implement cursor pagination and an idempotency key. Test duplicate creates, stable ordering, and that cursors reveal no internal IDs."
             }
           ]
         },
@@ -746,6 +898,10 @@
             {
               "title": "Rate limits and resilience",
               "practice": "Add bounded retries, timeouts, and per-client throttling."
+            },
+            {
+              "title": "Tenant authorization and transactions",
+              "practice": "Check tenant ownership in the same transaction as a write. Test cross-tenant requests, concurrent updates, rollback, and audit events."
             }
           ]
         }
@@ -767,6 +923,10 @@
             {
               "title": "SELECT and joins",
               "practice": "Answer reporting questions with joins and aggregates."
+            },
+            {
+              "title": "Constraints and safe CRUD",
+              "practice": "Create tables with keys, foreign keys, NOT NULL, and CHECK constraints. Verify invalid rows are rejected by the database."
             }
           ]
         },
@@ -781,6 +941,10 @@
             {
               "title": "Indexes and query plans",
               "practice": "Use EXPLAIN to improve a slow query and compare results."
+            },
+            {
+              "title": "Safe database migrations",
+              "practice": "Write a migration that preserves existing data and can be rolled back. Test both empty and populated starting databases."
             }
           ]
         },
@@ -795,6 +959,10 @@
             {
               "title": "Backup and restore",
               "practice": "Restore a backup into a clean database and verify consistency."
+            },
+            {
+              "title": "Query plans and index cost",
+              "practice": "Use EXPLAIN and representative measurements to evaluate a candidate index, including storage and write costs."
             }
           ]
         }
@@ -816,6 +984,10 @@
             {
               "title": "Git basics",
               "practice": "Create a branch, commit a focused change, and inspect the diff."
+            },
+            {
+              "title": "Reviewable branches and commits",
+              "practice": "Create a feature branch with small commits, inspect its diff, and recover a staged file while preserving working changes."
             }
           ]
         },
@@ -830,6 +1002,10 @@
             {
               "title": "Merge and recovery",
               "practice": "Resolve a conflict and recover a staged-file mistake."
+            },
+            {
+              "title": "Safe shell pipelines",
+              "practice": "Handle filenames safely, enable pipeline failure propagation, and keep diagnostics on stderr. Test spaces and upstream failure."
             }
           ]
         },
@@ -844,6 +1020,10 @@
             {
               "title": "Secure automation",
               "practice": "Review quoting, secrets, permissions, and untrusted input in a script."
+            },
+            {
+              "title": "Production change and rollback",
+              "practice": "Plan preflight checks, least-privilege execution, observable success criteria, and rollback; rehearse in a disposable environment."
             }
           ]
         }
@@ -865,6 +1045,10 @@
             {
               "title": "Ports and environment",
               "practice": "Pass configuration without baking secrets into an image."
+            },
+            {
+              "title": "Volumes and service networking",
+              "practice": "Run a service with a named volume and local port binding. Verify data survives recreation and explain container-to-container addressing."
             }
           ]
         },
@@ -879,6 +1063,10 @@
             {
               "title": "Build optimization",
               "practice": "Use a multi-stage build and compare image contents."
+            },
+            {
+              "title": "Multi-stage non-root image",
+              "practice": "Build in a separate stage and run as non-root. Check final image size, writable paths, and health behavior."
             }
           ]
         },
@@ -893,6 +1081,10 @@
             {
               "title": "Debug and release",
               "practice": "Diagnose a failing container and promote an immutable image tag."
+            },
+            {
+              "title": "Image and runtime hardening",
+              "practice": "Pin image digests, scan dependencies, drop capabilities, use read-only filesystems where possible, and keep secrets out of layers."
             }
           ]
         }
@@ -914,6 +1106,10 @@
             {
               "title": "Artifacts and caching",
               "practice": "Publish a build artifact and verify cache keys."
+            },
+            {
+              "title": "Tests on every pull request",
+              "practice": "Run format checks and unit tests on pull requests. Confirm a deliberately failing test blocks the workflow."
             }
           ]
         },
@@ -928,6 +1124,10 @@
             {
               "title": "Release gates",
               "practice": "Require checks and approval before production promotion."
+            },
+            {
+              "title": "Immutable artifact promotion",
+              "practice": "Build once, record version and checksum, and promote that same artifact. Verify rollback selects the previous artifact."
             }
           ]
         },
@@ -942,6 +1142,10 @@
             {
               "title": "Rollback strategy",
               "practice": "Practice a failed deployment rollback and verify service health."
+            },
+            {
+              "title": "Canary and rollback gates",
+              "practice": "Use user-facing health metrics to gate canary progression and trigger rollback. Test healthy rollout and regression paths."
             }
           ]
         }
@@ -963,6 +1167,10 @@
             {
               "title": "Services and ports",
               "practice": "Expose it inside the cluster and verify DNS/service routing."
+            },
+            {
+              "title": "Deployments, services, probes",
+              "practice": "Expose a stateless deployment with a Service and realistic readiness/liveness probes. Test delayed startup and an unhealthy process."
             }
           ]
         },
@@ -977,6 +1185,10 @@
             {
               "title": "Rollouts and resources",
               "practice": "Set resource requests/limits and roll out a new version."
+            },
+            {
+              "title": "Resources and rollout recovery",
+              "practice": "Set requests/limits, separate configuration from secrets, perform a rolling update, and verify rollout status and rollback."
             }
           ]
         },
@@ -991,6 +1203,10 @@
             {
               "title": "RBAC and incident diagnosis",
               "practice": "Apply least-privilege access and diagnose a failed rollout."
+            },
+            {
+              "title": "Disruption and network policy",
+              "practice": "Design disruption budgets, topology spread, and least-required network access. Test failure-domain assumptions."
             }
           ]
         }
@@ -1012,6 +1228,10 @@
             {
               "title": "Consumer groups",
               "practice": "Run two consumers and observe partition assignment."
+            },
+            {
+              "title": "Partitions and consumer groups",
+              "practice": "Create a topic and consumer group, observe partition assignment, and explain ordering limits when scaling consumers."
             }
           ]
         },
@@ -1026,6 +1246,10 @@
             {
               "title": "Schemas and compatibility",
               "practice": "Evolve an event schema while an old consumer remains active."
+            },
+            {
+              "title": "Retries and dead letters",
+              "practice": "Make consumer writes idempotent, bound transient retries, and route permanent failures to a dead-letter topic. Test duplicates and poison records."
             }
           ]
         },
@@ -1040,6 +1264,10 @@
             {
               "title": "Capacity and observability",
               "practice": "Measure lag and throughput, then plan partitions and retention."
+            },
+            {
+              "title": "Schema evolution and offsets",
+              "practice": "Plan backward-compatible event changes and rollout order. Test old/new consumer compatibility and offset commit timing."
             }
           ]
         }
@@ -1061,6 +1289,10 @@
             {
               "title": "Keys and expiration",
               "practice": "Design namespaced keys and verify expired values reload."
+            },
+            {
+              "title": "Cache keys and TTL policy",
+              "practice": "Include every result-affecting input in the key, set an appropriate TTL, and test that expiry returns fresh data."
             }
           ]
         },
@@ -1075,6 +1307,10 @@
             {
               "title": "HTTP and browser caches",
               "practice": "Set validators and cache headers for static resources."
+            },
+            {
+              "title": "Invalidation and concurrent misses",
+              "practice": "Build a cache-aside path with explicit invalidation and request coalescing. Test concurrent misses and writes."
             }
           ]
         },
@@ -1089,6 +1325,10 @@
             {
               "title": "Capacity and eviction",
               "practice": "Measure hit rate and memory; choose an eviction policy with evidence."
+            },
+            {
+              "title": "Outage and stale-data policy",
+              "practice": "Set cache memory bounds, timeouts, stale behavior, fallback, and circuit breaking. Test recovery without a request storm."
             }
           ]
         }
@@ -1110,6 +1350,10 @@
             {
               "title": "Health checks",
               "practice": "Distinguish process liveness from dependency readiness."
+            },
+            {
+              "title": "Structured logs and request IDs",
+              "practice": "Add request IDs and useful error context while excluding secrets and personal data. Trace one request through several log records."
             }
           ]
         },
@@ -1124,6 +1368,10 @@
             {
               "title": "SLOs and alerts",
               "practice": "Define an availability objective and alert on error budget burn."
+            },
+            {
+              "title": "SLIs, traces, and error budgets",
+              "practice": "Define an availability SLI and error-budget policy, instrument latency and failures, and avoid unbounded metric labels."
             }
           ]
         },
@@ -1138,6 +1386,10 @@
             {
               "title": "Capacity and postmortem",
               "practice": "Estimate headroom and write a blameless corrective action plan."
+            },
+            {
+              "title": "Actionable alert and runbook",
+              "practice": "Create an alert tied to a user-facing SLO, assign an owner, and link a response runbook. Exercise it with a controlled failure."
             }
           ]
         }
@@ -1159,6 +1411,10 @@
             {
               "title": "Secrets and permissions",
               "practice": "Remove a hard-coded secret and restrict file access."
+            },
+            {
+              "title": "Authentication versus ownership",
+              "practice": "Protect a route with authentication and object-level authorization. Test anonymous, wrong-owner, and authorized access."
             }
           ]
         },
@@ -1173,6 +1429,10 @@
             {
               "title": "Dependency and container review",
               "practice": "Pin dependencies and run a vulnerability scan."
+            },
+            {
+              "title": "SSRF and dependency boundaries",
+              "practice": "Restrict outbound URL destinations and redirects and source credentials safely. Test private-address and redirect bypasses."
             }
           ]
         },
@@ -1187,6 +1447,10 @@
             {
               "title": "Incident and recovery",
               "practice": "Rotate a compromised test credential and verify audit evidence."
+            },
+            {
+              "title": "Threat model and response",
+              "practice": "Map assets, trust boundaries, entry points, and abuse cases. Rank mitigations and define a vulnerability response procedure."
             }
           ]
         }
@@ -1208,6 +1472,10 @@
             {
               "title": "DNS, TLS, and ingress",
               "practice": "Trace a request from DNS to an application endpoint."
+            },
+            {
+              "title": "Least-privilege deployment identity",
+              "practice": "Allow an identity to deploy one service without reading unrelated secrets or changing account policy. Verify denied actions."
             }
           ]
         },
@@ -1222,6 +1490,10 @@
             {
               "title": "Storage and backups",
               "practice": "Restore a test dataset and verify application behavior."
+            },
+            {
+              "title": "Backup restore objectives",
+              "practice": "Define recovery point/time objectives, schedule backups, and restore into isolation. Measure actual recovery time and data loss."
             }
           ]
         },
@@ -1236,6 +1508,10 @@
             {
               "title": "Disaster recovery and cost",
               "practice": "Run a recovery exercise and estimate cost drivers."
+            },
+            {
+              "title": "Capacity, cost, and regional failure",
+              "practice": "Model peak capacity and cost, then design graceful degradation and recovery for a regional dependency failure."
             }
           ]
         }
@@ -1257,6 +1533,10 @@
             {
               "title": "SQLite retrieval",
               "practice": "Store a note and test whether relevant queries retrieve it."
+            },
+            {
+              "title": "Retrieval versus weight updates",
+              "practice": "Store reviewed facts separately from dialogue, retrieve them for answers, and verify they can be deleted without retraining."
             }
           ]
         },
@@ -1271,6 +1551,10 @@
             {
               "title": "Baseline evaluation",
               "practice": "Run a fixed coding set before and after an adapter; compare rubric scores."
+            },
+            {
+              "title": "Leakage-safe evaluation",
+              "practice": "Split by task/source, keep fixed held-out prompts, compare base and adapter identically, and check duplicate leakage."
             }
           ]
         },
@@ -1285,6 +1569,10 @@
             {
               "title": "Regression and rollback",
               "practice": "Reject an adapter that regresses held-out tasks and retain a rollback path."
+            },
+            {
+              "title": "Promotion and drift gates",
+              "practice": "Gate promotion on task quality, executable checks, latency, and memory. Keep rollback and monitor post-deployment regressions."
             }
           ]
         }
@@ -1306,6 +1594,10 @@
             {
               "title": "Text descriptions and OCR",
               "practice": "Compare a human-provided description with OCR text for a screenshot task."
+            },
+            {
+              "title": "Image content and alt text",
+              "practice": "Check whether the configured model supports vision, describe useful alt text, and distinguish image metadata from image content."
             }
           ]
         },
@@ -1320,6 +1612,10 @@
             {
               "title": "Grounding and uncertainty",
               "practice": "Ask for visible evidence and score unsupported claims."
+            },
+            {
+              "title": "Timestamped video frames",
+              "practice": "Sample ordered video frames with timestamps and summarize temporal changes. Test information lost when frames or audio are omitted."
             }
           ]
         },
@@ -1334,6 +1630,10 @@
             {
               "title": "Multimodal evaluation",
               "practice": "Measure missed events, false claims, latency, and memory on a small labeled set."
+            },
+            {
+              "title": "Media privacy and capability checks",
+              "practice": "Minimize retained frames, strip sensitive metadata, and report unsupported input honestly. Test image, video, malformed media, and text-only backends."
             }
           ]
         }

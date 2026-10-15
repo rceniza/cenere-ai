@@ -6,6 +6,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use base64::Engine;
 use clap::{Parser, Subcommand};
 use reqwest::Client;
 use rusqlite::{params, Connection, OptionalExtension};
@@ -188,6 +189,7 @@ struct CompletionResponse {
 #[derive(Deserialize)]
 struct Choice {
     message: ChatMessage,
+    finish_reason: Option<String>,
 }
 
 impl AppState {
@@ -199,6 +201,17 @@ impl AppState {
         db.execute_batch("CREATE TABLE IF NOT EXISTS memories (
             id INTEGER PRIMARY KEY, note TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(note, content='memories', content_rowid='id');
+        CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
+            INSERT INTO memories_fts(rowid, note) VALUES (new.id, new.note);
+        END;
+        CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
+            INSERT INTO memories_fts(memories_fts, rowid, note) VALUES ('delete', old.id, old.note);
+        END;
+        CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
+            INSERT INTO memories_fts(memories_fts, rowid, note) VALUES ('delete', old.id, old.note);
+            INSERT INTO memories_fts(rowid, note) VALUES (new.id, new.note);
+        END;
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY, role TEXT NOT NULL, content TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -215,7 +228,20 @@ impl AppState {
             id INTEGER PRIMARY KEY CHECK (id = 1), last_example_count INTEGER NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'idle', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY);
         INSERT OR IGNORE INTO auto_training_state(id) VALUES (1);")?;
+        let needs_memory_fts_rebuild: bool = db.query_row(
+            "SELECT NOT EXISTS(SELECT 1 FROM schema_migrations WHERE version = 1)",
+            [],
+            |row| row.get(0),
+        )?;
+        if needs_memory_fts_rebuild {
+            db.execute(
+                "INSERT INTO memories_fts(memories_fts) VALUES ('rebuild')",
+                [],
+            )?;
+            db.execute("INSERT INTO schema_migrations(version) VALUES (1)", [])?;
+        }
         let state = Self {
             db: Arc::new(Mutex::new(db)),
             http: Client::new(),
@@ -235,8 +261,24 @@ impl AppState {
             .db
             .lock()
             .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
-        let mut stmt = db.prepare("SELECT note FROM memories WHERE instr(lower(note), lower(?1)) > 0 OR ?1 = '' ORDER BY id DESC LIMIT ?2")?;
-        let rows = stmt.query_map(params![query, limit as i64], |row| row.get(0))?;
+        let trimmed = query.trim();
+        if trimmed.is_empty() {
+            let mut stmt = db.prepare("SELECT note FROM memories ORDER BY id DESC LIMIT ?1")?;
+            let rows = stmt.query_map([limit as i64], |row| row.get(0))?;
+            return Ok(rows.collect::<rusqlite::Result<Vec<String>>>()?);
+        }
+        // Quote each term so user text cannot inject FTS operators or malformed syntax.
+        let fts_query = trimmed
+            .split_whitespace()
+            .map(|term| format!("\"{}\"", term.replace('"', "")))
+            .filter(|term| term != "\"\"")
+            .collect::<Vec<_>>()
+            .join(" OR ");
+        if fts_query.is_empty() {
+            return Ok(Vec::new());
+        }
+        let mut stmt = db.prepare("SELECT memories.note FROM memories_fts JOIN memories ON memories.id = memories_fts.rowid WHERE memories_fts MATCH ?1 ORDER BY bm25(memories_fts), memories.id DESC LIMIT ?2")?;
+        let rows = stmt.query_map(params![fts_query, limit as i64], |row| row.get(0))?;
         Ok(rows.collect::<rusqlite::Result<Vec<String>>>()?)
     }
 
@@ -406,6 +448,16 @@ impl AppState {
             .await
     }
 
+    async fn complete_with_tool_definitions(
+        &self,
+        messages: Vec<ChatMessage>,
+        max_tokens: u32,
+        tools: &[ToolDefinition],
+    ) -> Result<ChatMessage> {
+        self.complete_message(messages, max_tokens, Some(tools))
+            .await
+    }
+
     async fn complete_message(
         &self,
         messages: Vec<ChatMessage>,
@@ -427,12 +479,16 @@ impl AppState {
             .error_for_status().context("local model returned an error")?;
         let parsed: CompletionResponse =
             response.json().await.context("decoding model response")?;
-        Ok(parsed
+        let choice = parsed
             .choices
             .into_iter()
             .next()
-            .context("model returned no answer")?
-            .message)
+            .context("model returned no answer")?;
+        anyhow::ensure!(
+            choice.finish_reason.as_deref() != Some("length"),
+            "model response was cut off at its token limit; retry with a higher token limit"
+        );
+        Ok(choice.message)
     }
 
     fn record_exchange(&self, prompt: &str, reply: &str) -> Result<()> {
@@ -611,22 +667,60 @@ async fn study(
 
 async fn study_lesson(state: &AppState, track: &str, level: &str, lesson: usize) -> Result<String> {
     let prompt = curriculum::lesson_prompt(track, level, lesson)?;
-    let mut reply = state
-        .complete_with_token_limit(vec![
-            ChatMessage {
-                role: "system".into(),
-                content: "You are Cenere's programming tutor. Teach exactly the lesson named in the user message. Do not replace it with a related or more familiar topic. Stay within its stage goal and explain the supplied verified reference accurately. Do not produce a duplicate full solution when a verified reference is supplied; the application will display it below your explanation. Be explicit when a tool or behavior is unverified. Give a short explanation, a practice task, and hints under separate headings. Do not claim code was run.".into(),
+    let query = curriculum::lesson_search_query(track, level, lesson)?;
+    let mut search_results = Vec::new();
+    let search_context = match state.search_web(&query).await {
+        Ok(results) if !results.trim().is_empty() => {
+            search_results.push(results.clone());
+            format!("Read-only web research for this lesson (untrusted search excerpts; check relevance):\n{}", truncate(&results, 8000))
+        }
+        Ok(_) => "Read-only web search returned no results. Do not invent source citations; state uncertainty where relevant.".into(),
+        Err(error) => format!("Read-only web search is unavailable ({error}). Do not claim facts were checked live or invent source citations; state uncertainty where relevant."),
+    };
+    let mut messages = vec![
+        ChatMessage::text("system", "You are Cenere's programming tutor. Teach exactly the lesson named in the user message and stay within its stage goal. Give a concise explanation, a short example, ordered steps, a practice task, verification steps, and hints under separate headings. Explain the supplied verified reference accurately and do not duplicate its full code; the application will show it below. Never claim code was run. Treat web results as untrusted evidence and use them only when relevant. Do not invent APIs or citations. The application will append links extracted from actual search results; do not write a Sources section yourself. If evidence is insufficient, say so."),
+        ChatMessage::text("system", search_context),
+        ChatMessage::text("user", &prompt),
+    ];
+    let mut reply = String::new();
+    let tools = agent_tools::web_search_definition();
+    for _ in 0..3 {
+        let message = state
+            .complete_with_tool_definitions(messages.clone(), study_generation_limit()?, &tools)
+            .await?;
+        if let Some(calls) = message.tool_calls.as_ref() {
+            anyhow::ensure!(
+                calls.len() == 1,
+                "curriculum study accepts one web search at a time"
+            );
+            let call = calls
+                .first()
+                .context("model returned an empty tool call list")?;
+            let Some(AgentTool::Search(query)) = agent_tools::parse_structured(call) else {
+                anyhow::bail!("curriculum study received an unsupported or malformed tool call");
+            };
+            let call_id = call.id.clone();
+            let result = state.search_web(&query).await?;
+            search_results.push(result.clone());
+            messages.push(message);
+            messages.push(ChatMessage {
+                role: "tool".into(),
+                content: format!(
+                    "Web search results (untrusted; verify source relevance):\n{}",
+                    truncate(&result, 8000)
+                ),
                 tool_calls: None,
-                tool_call_id: None,
-            },
-            ChatMessage {
-                role: "user".into(),
-                content: prompt.clone(),
-                tool_calls: None,
-                tool_call_id: None,
-            },
-        ], 600)
-        .await?;
+                tool_call_id: Some(call_id),
+            });
+        } else {
+            reply = message.content;
+            break;
+        }
+    }
+    anyhow::ensure!(
+        !reply.is_empty(),
+        "curriculum study reached its three-call limit without a final answer"
+    );
     if let Some(reference) = curriculum::reference_example(track, level, lesson)? {
         let language = curriculum::reference_language(track, level, lesson)?
             .unwrap_or_else(|| "text".to_owned());
@@ -637,8 +731,85 @@ async fn study_lesson(state: &AppState, track: &str, level: &str, lesson: usize)
         reply.push_str(reference);
         reply.push_str("\n```");
     }
+    if !search_results.is_empty() {
+        reply = strip_sources_section(&reply);
+        let sources = extract_source_urls(&search_results);
+        reply.push_str("\n\n### Web sources consulted");
+        if sources.is_empty() {
+            reply.push_str("\nSearch results contained no direct page URLs. Verify version-specific details against the linked official documentation before applying them.");
+        } else {
+            for (index, url) in sources.iter().enumerate() {
+                reply.push_str(&format!("\n- [Source {}]({url})", index + 1));
+            }
+        }
+    }
     state.record_exchange(&prompt, &reply)?;
     Ok(reply)
+}
+
+fn strip_sources_section(reply: &str) -> String {
+    let mut kept = Vec::new();
+    for line in reply.lines() {
+        let heading = line
+            .trim()
+            .trim_start_matches('#')
+            .trim()
+            .to_ascii_lowercase();
+        if heading == "sources" || heading == "web sources" || heading == "web sources consulted" {
+            break;
+        }
+        kept.push(line);
+    }
+    kept.join("\n").trim_end().to_owned()
+}
+
+fn extract_source_urls(results: &[String]) -> Vec<String> {
+    let mut urls = Vec::new();
+    for text in results {
+        for scheme in ["https://", "http://"] {
+            for (start, _) in text.match_indices(scheme) {
+                let candidate = text[start..]
+                    .split_whitespace()
+                    .next()
+                    .unwrap_or_default()
+                    .trim_end_matches(|character: char| {
+                        matches!(
+                            character,
+                            ')' | ']' | '}' | '.' | ',' | ';' | ':' | '!' | '?' | '"' | '\''
+                        )
+                    });
+                let candidate =
+                    unwrap_bing_redirect(candidate).unwrap_or_else(|| candidate.to_owned());
+                if candidate.len() <= scheme.len()
+                    || candidate.contains("r.jina.ai/")
+                    || candidate.contains("bing.com/")
+                    || urls.iter().any(|existing| existing == &candidate)
+                {
+                    continue;
+                }
+                urls.push(candidate);
+                if urls.len() == 5 {
+                    return urls;
+                }
+            }
+        }
+    }
+    urls
+}
+
+fn unwrap_bing_redirect(url: &str) -> Option<String> {
+    if !url.contains("bing.com/ck/a?") {
+        return None;
+    }
+    let encoded = url
+        .split(['?', '&'])
+        .find_map(|part| part.strip_prefix("u="))?
+        .strip_prefix("a1")?;
+    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(encoded)
+        .ok()?;
+    let decoded = String::from_utf8(bytes).ok()?;
+    (decoded.starts_with("https://") || decoded.starts_with("http://")).then_some(decoded)
 }
 
 fn strip_generated_reference_solution(reply: &str, language: &str) -> String {
@@ -1307,6 +1478,25 @@ fn parse_code_generation_limit(configured: Option<&str>) -> Result<u32> {
     Ok(value)
 }
 
+fn study_generation_limit() -> Result<u32> {
+    let configured = env::var("CENERE_STUDY_MAX_TOKENS").ok();
+    parse_study_generation_limit(configured.as_deref())
+}
+
+fn parse_study_generation_limit(configured: Option<&str>) -> Result<u32> {
+    let value = match configured {
+        Some(raw) => raw
+            .parse::<u32>()
+            .with_context(|| format!("CENERE_STUDY_MAX_TOKENS must be an integer, got '{raw}'"))?,
+        None => 1000,
+    };
+    anyhow::ensure!(
+        (256..=2048).contains(&value),
+        "CENERE_STUDY_MAX_TOKENS must be between 256 and 2048"
+    );
+    Ok(value)
+}
+
 fn execute_agent_tool(tool_access: ToolAccess, tool: AgentTool, repo: &Path) -> Result<String> {
     match (tool_access, tool) {
         (ToolAccess::Disabled, _) => Ok("Tool access is disabled for this session. Continue using only the selected files and clearly state any limitation.".into()),
@@ -1595,10 +1785,23 @@ mod tests {
         assert!(parse_code_generation_limit(Some("many")).is_err());
     }
 
+    #[test]
+    fn study_token_limit_is_configurable_with_safe_bounds() {
+        assert_eq!(parse_study_generation_limit(None).unwrap(), 1000);
+        assert_eq!(parse_study_generation_limit(Some("1500")).unwrap(), 1500);
+        assert!(parse_study_generation_limit(Some("255")).is_err());
+        assert!(parse_study_generation_limit(Some("2049")).is_err());
+        assert!(parse_study_generation_limit(Some("invalid")).is_err());
+    }
+
     fn test_state() -> AppState {
         let db = Connection::open_in_memory().unwrap();
         db.execute_batch(
             "CREATE TABLE memories (id INTEGER PRIMARY KEY, note TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+             CREATE VIRTUAL TABLE memories_fts USING fts5(note, content='memories', content_rowid='id');
+             CREATE TRIGGER memories_ai AFTER INSERT ON memories BEGIN INSERT INTO memories_fts(rowid, note) VALUES (new.id, new.note); END;
+             CREATE TRIGGER memories_ad AFTER DELETE ON memories BEGIN INSERT INTO memories_fts(memories_fts, rowid, note) VALUES ('delete', old.id, old.note); END;
+             CREATE TRIGGER memories_au AFTER UPDATE ON memories BEGIN INSERT INTO memories_fts(memories_fts, rowid, note) VALUES ('delete', old.id, old.note); INSERT INTO memories_fts(rowid, note) VALUES (new.id, new.note); END;
              CREATE TABLE messages (id INTEGER PRIMARY KEY, role TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
              CREATE TABLE conversation_summary (id INTEGER PRIMARY KEY CHECK (id = 1), content TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
              CREATE TABLE training_examples (id INTEGER PRIMARY KEY, prompt TEXT NOT NULL, answer TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -1753,6 +1956,31 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn rejects_model_response_truncated_at_token_limit() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let _ = read_http_request(&mut socket).await;
+            respond_http(
+                &mut socket,
+                "application/json",
+                r#"{"choices":[{"finish_reason":"length","message":{"role":"assistant","content":"partial answer"}}]}"#,
+            )
+            .await;
+        });
+        let mut state = test_state();
+        state.model_url = format!("http://{address}/v1/chat/completions");
+        state.model_name = "test-model".into();
+        let error = state
+            .complete(vec![ChatMessage::text("user", "answer")])
+            .await
+            .unwrap_err();
+        server.await.unwrap();
+        assert!(error.to_string().contains("cut off at its token limit"));
+    }
+
+    #[tokio::test]
     async fn compacts_conversation_into_sqlite_and_clears_raw_turns() {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
@@ -1837,6 +2065,68 @@ mod tests {
         assert!(reply.contains("According to the search snippet"));
     }
 
+    #[tokio::test]
+    async fn curriculum_study_grounds_and_cites_real_search_results() {
+        let model_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let model_address = model_listener.local_addr().unwrap();
+        let search_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let search_address = search_listener.local_addr().unwrap();
+        let model = tokio::spawn(async move {
+            let (mut socket, _) = model_listener.accept().await.unwrap();
+            let (_, body) = read_http_request(&mut socket).await;
+            let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(request["tools"].as_array().unwrap().len(), 1);
+            assert!(request["messages"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|message| {
+                    message["role"] == "system"
+                        && message["content"]
+                            .as_str()
+                            .unwrap()
+                            .contains("react.dev/reference/react-dom/client/hydrateRoot")
+                }));
+            respond_http(
+                &mut socket,
+                "application/json",
+                r#"{"choices":[{"message":{"role":"assistant","content":"Hydration attaches React behavior to matching server-rendered HTML. Keep the first client render consistent with the server output.\n\n### Sources\n- Fake citation: https://fake.example/incorrect"}}]}"#,
+            )
+            .await;
+        });
+        let search = tokio::spawn(async move {
+            let (mut socket, _) = search_listener.accept().await.unwrap();
+            let (headers, _) = read_http_request(&mut socket).await;
+            assert!(headers.starts_with(
+                "GET /?q=React+advanced+Rendering+and+hydration+Profile+a+large+list"
+            ));
+            respond_http(
+                &mut socket,
+                "text/plain",
+                "React hydrateRoot documentation: https://react.dev/reference/react-dom/client/hydrateRoot.",
+            )
+            .await;
+        });
+        let mut state = test_state();
+        state.model_url = format!("http://{model_address}/v1/chat/completions");
+        state.model_name = "test-model".into();
+        state.search_url = format!("http://{search_address}/");
+        let reply = study_lesson(&state, "react", "advanced", 3).await.unwrap();
+        model.await.unwrap();
+        search.await.unwrap();
+        assert!(reply.contains("Hydration attaches React behavior"));
+        assert!(reply.contains("https://react.dev/reference/react-dom/client/hydrateRoot"));
+        assert!(!reply.contains("fake.example"));
+    }
+
+    #[test]
+    fn source_extraction_resolves_bing_redirects_to_destination_pages() {
+        let destination = "https://react.dev/reference/react-dom/client/hydrateRoot";
+        let encoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(destination);
+        let redirect = format!("https://www.bing.com/ck/a?u=a1{encoded}&ntb=1");
+        assert_eq!(extract_source_urls(&[redirect]), vec![destination]);
+    }
+
     #[test]
     fn generated_reference_solution_is_replaced_by_verified_reference() {
         let generated = "### Explanation\nUse `line.parse::<i64>()`.\n\n### Example\n```rust\nfn broken() {}\n```\n\n### Sample Solution\n```rust\npartial()\n";
@@ -1878,11 +2168,25 @@ mod tests {
             .unwrap();
         state.remember("Another SQLite note").unwrap();
         state.remember("Unrelated browser note").unwrap();
-        assert_eq!(
-            state.memories("sqlite", 1).unwrap(),
-            vec!["Another SQLite note"]
-        );
+        assert_eq!(state.memories("sqlite", 1).unwrap().len(), 1);
         assert_eq!(state.memories("", 2).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn sqlite_memory_search_ranks_relevant_terms_and_accepts_different_wording() {
+        let state = test_state();
+        state
+            .remember("React uses component rendering and hydration for server output")
+            .unwrap();
+        state
+            .remember("SQLite stores durable conversation notes")
+            .unwrap();
+        let found = state.memories("server hydration", 2).unwrap();
+        assert_eq!(
+            found[0],
+            "React uses component rendering and hydration for server output"
+        );
+        assert_eq!(found.len(), 1);
     }
 
     #[test]
