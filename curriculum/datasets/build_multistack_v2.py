@@ -13,6 +13,7 @@ EXAMPLES = [
     ("cpp", "C++", "cpp/main.cpp", "C++"),
     ("php", "PHP", "php/main.php", "PHP"),
     ("javascript-typescript", "JavaScript", "node/main.js", "JavaScript"),
+    ("javascript-typescript", "TypeScript", "typescript/main.ts", "typescript"),
     ("nodejs", "Node.js", "node/main.js", "JavaScript"),
     ("python", "Python", "python/main.py", "Python"),
     ("rust", "Rust", "rust/main.rs", "Rust"),
@@ -23,6 +24,7 @@ CODE_EVAL = [
     ("cpp", "C++", "cpp"),
     ("php", "PHP", "php"),
     ("javascript-typescript", "JavaScript", "javascript"),
+    ("javascript-typescript", "TypeScript", "typescript"),
     ("nodejs", "Node.js", "nodejs"),
     ("python", "Python", "python"),
     ("rust", "Rust", "rust"),
@@ -44,7 +46,7 @@ def render() -> dict[str, bytes]:
             "prints a JSON array sorted ascending with duplicates removed, prints [] for empty input, and exits non-zero "
             "without standard output for malformed tokens or out-of-range values. Include no explanation outside the code."
         )
-        example_id = f"{track}-beginner-normalize-list-code"
+        example_id = f"{track}-beginner-normalize-list-{fence.lower()}-code"
         require(example_id not in ids, f"duplicate training id: {example_id}")
         ids.add(example_id)
         source = (ROOT / "curriculum/examples/polyglot" / source_rel).read_text(encoding="utf-8").rstrip()
@@ -57,7 +59,7 @@ def render() -> dict[str, bytes]:
                 {"role": "assistant", "content": f"```{fence}\n{source}\n```"},
             ],
         })
-    require(len(train) == 83, "v2 should contain the v1 seed plus eight checked coding answers")
+    require(len(train) == 84, "v2 should contain the v1 seed plus nine checked coding answers")
     valid = lines(BASE / "valid.jsonl")
     evaluation = lines(BASE / "eval.jsonl")
     train_prompts = {row["messages"][0]["content"] for row in train}
@@ -113,7 +115,7 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, data in outputs.items():
         (OUT / name).write_bytes(data)
-    print("Wrote 83 training, 25 validation, and 25 held-out rubric cases.")
+    print("Wrote 84 training, 25 validation, 25 held-out rubric, and nine held-out code cases.")
 
 
 if __name__ == "__main__":

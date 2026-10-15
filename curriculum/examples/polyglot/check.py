@@ -43,7 +43,7 @@ def main() -> int:
     parser.add_argument("--require", help="comma-separated languages that must be available")
     args = parser.parse_args()
     required = set(args.require.split(",")) if args.require else set()
-    known = {"rust", "c", "cpp", "python", "node", "php", "go", "java"}
+    known = {"rust", "c", "cpp", "python", "node", "typescript", "php", "go", "java"}
     if required - known:
         parser.error(f"unknown language(s): {', '.join(sorted(required - known))}")
 
@@ -55,6 +55,7 @@ def main() -> int:
             "cpp": (["c++"], ["c++", "-std=c++17", "-Wall", "-Wextra", "-Werror", str(ROOT / "cpp/main.cpp"), "-o", str(temp / "cpp")]),
             "python": (["python3"], ["python3", str(ROOT / "python/main.py")]),
             "node": (["node"], ["node", str(ROOT / "node/main.js")]),
+            "typescript": (["node"], ["node", "--experimental-strip-types", str(ROOT / "typescript/main.ts")]),
             "php": (["php"], ["php", str(ROOT / "php/main.php")]),
             "go": (["go"], ["go", "build", "-o", str(temp / "go"), str(ROOT / "go/main.go")]),
             "java": (["javac", "java"], ["javac", "-d", str(temp), str(ROOT / "java/Main.java")]),

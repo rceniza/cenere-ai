@@ -8,4 +8,4 @@ The shared cases include whitespace, duplicates, negatives, empty input, malform
 python3 curriculum/examples/polyglot/check.py
 ```
 
-The checker compiles native examples into a temporary directory, runs every implementation whose compiler/runtime is installed, and reports unavailable toolchains as skips. For a strict local matrix, pass `--require rust,c,cpp,python,node,php,go,java`. Add the required toolchain before using strict mode on another host. This is a small behavioral exercise, not evidence of broad language mastery.
+The checker compiles native examples into a temporary directory, runs every implementation whose compiler/runtime is installed, and reports unavailable toolchains as skips. The TypeScript sample runs with Node's native type stripping (Node 22.18+ or Node 24+); see the [Node.js TypeScript docs](https://nodejs.org/api/typescript.html). For a strict local matrix, pass `--require rust,c,cpp,python,node,typescript,php,go,java`. Add the required toolchain before using strict mode on another host. This is one checked task per language, not evidence of broad language mastery.

@@ -22,6 +22,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
 
@@ -38,7 +43,7 @@ jobs:
         run: python3 curriculum/datasets/build_multistack_v2.py --check
 
       - name: Compile and run polyglot exercise
-        run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node
+        run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript
 
       - name: Build production container
         run: docker build --tag cenere-ai:ci .

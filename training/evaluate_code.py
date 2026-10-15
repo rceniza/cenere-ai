@@ -24,6 +24,7 @@ LANGUAGES = {
     "cpp": ("c++", "main.cpp", ["c++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]),
     "php": ("php", "main.php", None),
     "javascript": ("node", "main.js", None),
+    "typescript": ("node", "main.ts", ["node", "--experimental-strip-types"]),
     "nodejs": ("node", "main.js", None),
     "python": ("python3", "main.py", None),
     "rust": ("rustc", "main.rs", ["rustc", "--edition=2021"]),
@@ -37,6 +38,7 @@ def fenced_code(answer: str, language: str) -> Optional[str]:
         "cpp": {"cpp", "c++"},
         "php": {"php"},
         "javascript": {"javascript", "js", "jsx", "typescript", "ts"},
+        "typescript": {"typescript", "ts"},
         "nodejs": {"javascript", "js", "node", "nodejs"},
         "python": {"python", "py"},
         "rust": {"rust", "rs"},
@@ -82,6 +84,8 @@ def check(case: dict, answer: str) -> list[str]:
             command = ["php", str(source_path)]
         elif language in {"javascript", "nodejs"}:
             command = ["node", str(source_path)]
+        elif language == "typescript":
+            command = [*compiler, str(source_path)]
         else:
             command = ["python3", str(source_path)]
 

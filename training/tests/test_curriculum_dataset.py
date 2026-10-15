@@ -64,19 +64,22 @@ class MultistackDatasetTests(unittest.TestCase):
         for filename, content in rendered.items():
             self.assertEqual((DATA_V2 / filename).read_bytes(), content, filename)
         train = read_jsonl(DATA_V2 / "train.jsonl")
-        self.assertEqual(len(train), 83)
-        code_rows = [row for row in train if row["id"].endswith("normalize-list-code")]
-        self.assertEqual(len(code_rows), 8)
+        self.assertEqual(len(train), 84)
+        code_rows = [row for row in train if row["id"].endswith("-code")]
+        self.assertEqual(len(code_rows), 9)
         self.assertEqual(
             {row["track"] for row in code_rows},
             {"c", "cpp", "php", "javascript-typescript", "nodejs", "python", "rust", "go-java"},
         )
-        source_by_track = {track: source for track, _display, source, _fence in BUILDER_V2.EXAMPLES}
-        fence_by_track = {track: fence for track, _display, _source, fence in BUILDER_V2.EXAMPLES}
+        source_by_id = {
+            f"{track}-beginner-normalize-list-{fence.lower()}-code": (source, fence)
+            for track, _display, source, fence in BUILDER_V2.EXAMPLES
+        }
         for row in code_rows:
             answer = row["messages"][-1]["content"]
-            source = (ROOT / "curriculum/examples/polyglot" / source_by_track[row["track"]]).read_text().rstrip()
-            expected = f"```{fence_by_track[row['track']]}\n{source}\n```"
+            source_rel, fence = source_by_id[row["id"]]
+            source = (ROOT / "curriculum/examples/polyglot" / source_rel).read_text().rstrip()
+            expected = f"```{fence}\n{source}\n```"
             self.assertEqual(answer, expected)
 
     def test_code_focused_training_stays_separate_from_heldout_rubric(self):
@@ -89,10 +92,10 @@ class MultistackDatasetTests(unittest.TestCase):
     def test_code_execution_eval_is_held_out_and_covers_checked_stacks(self):
         train = {row["messages"][0]["content"] for row in read_jsonl(DATA_V2 / "train.jsonl")}
         code_eval = read_jsonl(DATA_V2 / "code-eval.jsonl")
-        self.assertEqual(len(code_eval), 8)
+        self.assertEqual(len(code_eval), 9)
         self.assertEqual(
             {row["language"] for row in code_eval},
-            {"c", "cpp", "php", "javascript", "nodejs", "python", "rust", "go"},
+            {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go"},
         )
         self.assertTrue(all(row["prompt"] not in train for row in code_eval))
         self.assertTrue(all("return only" in row["prompt"].lower() for row in code_eval))
@@ -101,6 +104,11 @@ class MultistackDatasetTests(unittest.TestCase):
         self.assertEqual(CODE_EVAL.fenced_code("```python\nprint('ok')\n```", "python"), "print('ok')")
         self.assertIsNone(CODE_EVAL.fenced_code("I cannot provide code.", "python"))
         self.assertIsNone(CODE_EVAL.fenced_code("```bash\necho wrong language\n```", "python"))
+
+    def test_typescript_reference_passes_the_held_out_code_evaluator(self):
+        source = (ROOT / "curriculum/examples/polyglot/typescript/main.ts").read_text()
+        failures = CODE_EVAL.check({"language": "typescript"}, f"```typescript\n{source}\n```")
+        self.assertEqual(failures, [])
 
 
 if __name__ == "__main__":
