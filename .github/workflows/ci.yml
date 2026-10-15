@@ -34,5 +34,8 @@ jobs:
       - name: Verify curriculum data is reproducible
         run: python3 curriculum/datasets/build_multistack_v1.py --check
 
+      - name: Compile and run polyglot exercise
+        run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node
+
       - name: Build production container
         run: docker build --tag cenere-ai:ci .
