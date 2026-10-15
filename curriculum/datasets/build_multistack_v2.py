@@ -18,6 +18,7 @@ EXAMPLES = [
     ("python", "Python", "python/main.py", "Python"),
     ("rust", "Rust", "rust/main.rs", "Rust"),
     ("go-java", "Go", "go/main.go", "Go"),
+    ("go-java", "Java", "java/Main.java", "Java"),
 ]
 CODE_EVAL = [
     ("c", "C", "c"),
@@ -29,6 +30,7 @@ CODE_EVAL = [
     ("python", "Python", "python"),
     ("rust", "Rust", "rust"),
     ("go-java", "Go", "go"),
+    ("go-java", "Java", "java"),
 ]
 
 
@@ -116,7 +118,7 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, data in outputs.items():
         (OUT / name).write_bytes(data)
-    print(f"Wrote {len(outputs['train.jsonl'].splitlines())} training, {len(outputs['valid.jsonl'].splitlines())} validation, {len(outputs['eval.jsonl'].splitlines())} held-out rubric, and nine held-out code cases.")
+    print(f"Wrote {len(outputs['train.jsonl'].splitlines())} training, {len(outputs['valid.jsonl'].splitlines())} validation, {len(outputs['eval.jsonl'].splitlines())} held-out rubric, and {len(outputs['code-eval.jsonl'].splitlines())} held-out code cases.")
 
 
 if __name__ == "__main__":

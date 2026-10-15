@@ -154,6 +154,7 @@ where
 }
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ChatRequest {
     message: String,
 }
@@ -1913,6 +1914,14 @@ mod tests {
         assert!(serde_json::from_value::<ChatMessage>(multimodal).is_err());
         assert!(serde_json::from_value::<ChatRequest>(serde_json::json!({
             "message": [{"type": "image", "url": "image.png"}]
+        }))
+        .is_err());
+        assert!(serde_json::from_value::<ChatRequest>(serde_json::json!({
+            "message": "Describe this", "image": "image.png"
+        }))
+        .is_err());
+        assert!(serde_json::from_value::<ChatRequest>(serde_json::json!({
+            "message": "Summarize this", "video": "clip.mp4"
         }))
         .is_err());
     }

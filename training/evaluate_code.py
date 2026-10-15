@@ -29,6 +29,7 @@ LANGUAGES = {
     "python": ("python3", "main.py", None),
     "rust": ("rustc", "main.rs", ["rustc", "--edition=2021"]),
     "go": ("go", "main.go", ["go", "build"]),
+    "java": ("javac", "Main.java", ["javac"]),
 }
 
 
@@ -43,6 +44,7 @@ def fenced_code(answer: str, language: str) -> Optional[str]:
         "python": {"python", "py"},
         "rust": {"rust", "rs"},
         "go": {"go"},
+        "java": {"java"},
     }
     for match in re.finditer(r"```([^\s`]*)[^\n]*\n(.*?)```", answer, re.DOTALL):
         if match.group(1).lower() in aliases.get(language, set()):
@@ -61,6 +63,8 @@ def check(case: dict, answer: str) -> list[str]:
     command_name, filename, compiler = LANGUAGES[language]
     if shutil.which(command_name) is None:
         return [f"toolchain unavailable: {command_name}"]
+    if language == "java" and shutil.which("java") is None:
+        return ["toolchain unavailable: java runtime"]
     source = fenced_code(answer, language)
     if not source:
         return ["missing fenced source code"]
@@ -70,16 +74,18 @@ def check(case: dict, answer: str) -> list[str]:
         temp = Path(temp_name)
         source_path = temp / filename
         source_path.write_text(source + "\n", encoding="utf-8")
-        if language in {"c", "cpp", "rust", "go"}:
+        if language in {"c", "cpp", "rust", "go", "java"}:
             binary = temp / "program"
             if language in {"c", "cpp", "rust"}:
                 build = [*compiler, str(source_path), "-o", str(binary)]
-            else:
+            elif language == "go":
                 build = [*compiler, "-o", str(binary), str(source_path)]
+            else:
+                build = [*compiler, "-d", str(temp), str(source_path)]
             result = subprocess.run(build, text=True, capture_output=True, timeout=60, check=False)
             if result.returncode:
                 return ["compile failed: " + result.stderr[-1200:]]
-            command = [str(binary)]
+            command = ["java", "-cp", str(temp), "Main"] if language == "java" else [str(binary)]
         elif language == "php":
             command = ["php", str(source_path)]
         elif language in {"javascript", "nodejs"}:

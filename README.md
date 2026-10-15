@@ -69,6 +69,8 @@ Add `--apply` to validate the diff and ask before applying it. To start a new ap
 
 The CLI and web UI share a staged curriculum covering programming languages; frontend and backend framework families; legacy systems; database engines; mobile/desktop development; web standards; APIs; DevOps; data infrastructure; security; cloud production; local AI; and multimodal capability. The individual lessons name established and current technologies, including AngularJS, Angular, React, Vue, Svelte, jQuery, Spring, ASP.NET Core, Django, FastAPI, Laravel, Rails, COBOL, Fortran, Perl, PostgreSQL, MySQL, Oracle, MongoDB, Swift, Kotlin, Flutter, Electron, CMake, Maven, Gradle, npm, pnpm, and Cargo. All 31 tracks have beginner, intermediate, and advanced stages, with at least three practice lessons in each stage (287 lessons total).
 
+The current Qwen2.5-Coder checkpoint and chat API are text-only. Image arrays and image/video fields are rejected; video understanding would need a separate vision model plus media decoding/frame selection. See [the capability boundary](docs/architecture.md#media-capability-boundary). The curriculum teaches multimodal system concepts, but it does not mean Cenere can currently inspect uploaded images or video.
+
 ```sh
 cargo run -- learn
 cargo run -- learn rust

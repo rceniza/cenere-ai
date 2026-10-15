@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import shutil
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -7,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "curriculum/datasets/cenere-multistack-v1"
 DATA_V2 = ROOT / "curriculum/datasets/cenere-multistack-v2"
+DATA_V3 = ROOT / "curriculum/datasets/cenere-multistack-v3"
 SPEC = importlib.util.spec_from_file_location(
     "multistack_v1", ROOT / "curriculum/datasets/build_multistack_v1.py"
 )
@@ -20,10 +23,23 @@ SPEC_V2.loader.exec_module(BUILDER_V2)
 SPEC_CODE_EVAL = importlib.util.spec_from_file_location("evaluate_code", ROOT / "training/evaluate_code.py")
 CODE_EVAL = importlib.util.module_from_spec(SPEC_CODE_EVAL)
 SPEC_CODE_EVAL.loader.exec_module(CODE_EVAL)
+SPEC_V3 = importlib.util.spec_from_file_location("multistack_v3", ROOT / "curriculum/datasets/build_multistack_v3.py")
+BUILDER_V3 = importlib.util.module_from_spec(SPEC_V3)
+SPEC_V3.loader.exec_module(BUILDER_V3)
 
 
 def read_jsonl(path):
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def java_runtime_available():
+    java = shutil.which("java")
+    if java is None:
+        return False
+    try:
+        return subprocess.run([java, "-version"], capture_output=True, timeout=5).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
 
 
 class MultistackDatasetTests(unittest.TestCase):
@@ -66,9 +82,9 @@ class MultistackDatasetTests(unittest.TestCase):
         for filename, content in rendered.items():
             self.assertEqual((DATA_V2 / filename).read_bytes(), content, filename)
         train = read_jsonl(DATA_V2 / "train.jsonl")
-        self.assertEqual(len(train), len(json.loads((ROOT / "curriculum/catalog.json").read_text())["tracks"]) * 3 + 9)
+        self.assertEqual(len(train), len(json.loads((ROOT / "curriculum/catalog.json").read_text())["tracks"]) * 3 + 10)
         code_rows = [row for row in train if row["id"].endswith("-code")]
-        self.assertEqual(len(code_rows), 9)
+        self.assertEqual(len(code_rows), 10)
         self.assertEqual(
             {row["track"] for row in code_rows},
             {"c", "cpp", "php", "javascript-typescript", "nodejs", "python", "rust", "go-java"},
@@ -94,11 +110,11 @@ class MultistackDatasetTests(unittest.TestCase):
     def test_code_execution_eval_is_held_out_and_covers_checked_stacks(self):
         train = {row["messages"][0]["content"] for row in read_jsonl(DATA_V2 / "train.jsonl")}
         code_eval = read_jsonl(DATA_V2 / "code-eval.jsonl")
-        self.assertEqual(len(code_eval), 9)
+        self.assertEqual(len(code_eval), 10)
         self.assertEqual(len({row["id"] for row in code_eval}), len(code_eval))
         self.assertEqual(
             {row["language"] for row in code_eval},
-            {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go"},
+            {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go", "java"},
         )
         self.assertTrue(all(row["prompt"] not in train for row in code_eval))
         self.assertTrue(all("return only" in row["prompt"].lower() for row in code_eval))
@@ -112,6 +128,31 @@ class MultistackDatasetTests(unittest.TestCase):
         source = (ROOT / "curriculum/examples/polyglot/typescript/main.ts").read_text()
         failures = CODE_EVAL.check({"language": "typescript"}, f"```typescript\n{source}\n```")
         self.assertEqual(failures, [])
+
+    @unittest.skipUnless(java_runtime_available(), "Java runtime is not installed")
+    def test_java_reference_passes_the_held_out_code_evaluator(self):
+        source = (ROOT / "curriculum/examples/polyglot/java/Main.java").read_text()
+        failures = CODE_EVAL.check({"language": "java"}, f"```java\n{source}\n```")
+        self.assertEqual(failures, [])
+
+    def test_ecosystem_dataset_is_reproducible_split_safe_and_covers_all_new_tracks(self):
+        rendered = BUILDER_V3.render()
+        for filename, content in rendered.items():
+            self.assertEqual((DATA_V3 / filename).read_bytes(), content, filename)
+        train = read_jsonl(DATA_V3 / "train.jsonl")
+        valid = read_jsonl(DATA_V3 / "valid.jsonl")
+        evaluation = read_jsonl(DATA_V3 / "eval.jsonl")
+        self.assertEqual(len(train), 103 + len(BUILDER_V3.TRAIN))
+        self.assertEqual(len(valid), 31 + len(BUILDER_V3.VALID))
+        self.assertEqual(len(evaluation), 31 + len(BUILDER_V3.EVAL))
+        self.assertEqual({row["track"] for row in train if row["id"].startswith("ecosystem-")},
+                         {"frontend-frameworks", "backend-frameworks", "legacy-systems", "database-engines", "mobile-desktop", "build-toolchains"})
+        train_prompts = {row["messages"][0]["content"] for row in train}
+        valid_prompts = {row["messages"][0]["content"] for row in valid}
+        eval_prompts = {row["prompt"] for row in evaluation}
+        self.assertFalse(train_prompts & valid_prompts)
+        self.assertFalse(train_prompts & eval_prompts)
+        self.assertFalse(valid_prompts & eval_prompts)
 
     def test_new_ecosystem_tracks_link_to_official_documentation(self):
         catalog = json.loads((ROOT / "curriculum/catalog.json").read_text())

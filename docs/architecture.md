@@ -25,6 +25,6 @@ Reviewed examples remain in SQLite until exported for training. The optional App
 
 ## Media capability boundary
 
-The local checkpoint's `config.json` declares `model_type: qwen2` and `architectures: [Qwen2ForCausalLM]`; its directory contains tokenizer files but no image/video processor. The Rust chat request also accepts `content` as a string, and a unit test confirms that an image content array is rejected. This build can discuss text supplied by a person or OCR step, but it does not inspect raw image or video input.
+The local checkpoint's `config.json` declares `model_type: qwen2` and `architectures: [Qwen2ForCausalLM]`; its directory contains tokenizer files but no image/video processor. The Rust chat request accepts a text string and rejects unknown fields, image/video fields, and multimodal content arrays. Tests cover each rejection. This build can discuss text supplied by a person or OCR step, but it does not inspect raw image or video input.
 
 The official [Qwen2.5-Coder-3B model card](https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct) identifies it as text generation. Qwen publishes a separate [Qwen2.5-VL-3B model card](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct) with an image-text processor and examples for timestamped video/frame inputs. That is a possible later model/pipeline, not a capability of Cenere's currently installed checkpoint or Rust endpoint.

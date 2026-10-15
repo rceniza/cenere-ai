@@ -27,6 +27,12 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
 
@@ -42,8 +48,11 @@ jobs:
       - name: Verify code-focused training data is reproducible
         run: python3 curriculum/datasets/build_multistack_v2.py --check
 
+      - name: Verify ecosystem training data is reproducible
+        run: python3 curriculum/datasets/build_multistack_v3.py --check
+
       - name: Compile and run polyglot exercise
-        run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript
+        run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript,java
 
       - name: Build production container
         run: docker build --tag cenere-ai:ci .
