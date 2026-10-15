@@ -1,8 +1,8 @@
 # Cenere multistack v4: verified corrections and executable coding
 
-V4 builds on v3 with ten fact-correction examples based on model errors found in held-out responses, plus a second standard-library coding exercise in ten languages. The new corrections cover Fortran array bounds, SQLite WAL writers, Next.js client directives, Tauri filesystem capabilities, ASP.NET Core lifetimes, React request cancellation, Kotlin cancellation, COBOL record layouts, Spring remote transactions, and language/dependency fidelity in generated C.
+V4 builds on v3 with ten fact-correction examples based on model errors found in held-out responses, plus a second standard-library coding exercise in eleven language targets. The new corrections cover Fortran array bounds, SQLite WAL writers, Next.js client directives, Tauri filesystem capabilities, ASP.NET Core lifetimes, React request cancellation, Kotlin cancellation, COBOL record layouts, Spring remote transactions, and language/dependency fidelity in generated C.
 
-The generated split contains 149 training rows, 47 validation rows, 59 held-out rubric prompts, and 20 executable coding prompts. The new `sum-int32` task checks valid input, signed 32-bit boundaries, arithmetic overflow, malformed input, extra tokens, exit status, and exact stdout. All ten reference implementations pass the same seven cases locally.
+The generated split contains 151 training rows, 47 validation rows, 59 held-out rubric prompts, and 22 executable coding prompts. The new `sum-int32` task checks valid input, signed 32-bit boundaries, arithmetic overflow, malformed input, extra tokens, exit status, and exact stdout. C# uses the .NET 10 LTS SDK; CI compiles and runs all eleven targets across the same seven cases per task.
 
 Primary documentation used to review the corrections:
 
@@ -12,6 +12,8 @@ Primary documentation used to review the corrections:
 - [Tauri filesystem permissions](https://v2.tauri.app/plugin/file-system/)
 - [ASP.NET Core dependency lifetimes](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-10.0)
 - [MongoDB transaction scope](https://www.mongodb.com/docs/manual/core/transactions/)
+- [.NET 10 support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core)
+- [Create a .NET console application](https://learn.microsoft.com/dotnet/core/tutorials/create-console-app/)
 
 Rebuild and verify:
 

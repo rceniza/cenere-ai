@@ -19,6 +19,7 @@ EXAMPLES = [
     ("rust", "Rust", "rust/main.rs", "Rust"),
     ("go-java", "Go", "go/main.go", "Go"),
     ("go-java", "Java", "java/Main.java", "Java"),
+    ("csharp", "C#", "csharp/main.cs", "csharp"),
 ]
 CODE_EVAL = [
     ("c", "C", "c"),
@@ -31,6 +32,7 @@ CODE_EVAL = [
     ("rust", "Rust", "rust"),
     ("go-java", "Go", "go"),
     ("go-java", "Java", "java"),
+    ("csharp", "C#", "csharp"),
 ]
 
 

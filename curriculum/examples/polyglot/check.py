@@ -47,12 +47,30 @@ def run(command: list[str], *, input_text: str | None = None) -> subprocess.Comp
     return subprocess.run(command, input=input_text, text=True, capture_output=True, timeout=120, check=False)
 
 
+def prepare_csharp(source: Path, root: Path, name: str) -> tuple[list[str], list[str]]:
+    project = root / name
+    project.mkdir()
+    (project / "Program.cs").write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    project_file = project / "CenereExample.csproj"
+    project_file.write_text(
+        '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>'
+        '<TargetFramework>net10.0</TargetFramework><ImplicitUsings>disable</ImplicitUsings>'
+        '<Nullable>enable</Nullable></PropertyGroup></Project>',
+        encoding="utf-8",
+    )
+    output = project / "out"
+    return (
+        ["dotnet", "build", str(project_file), "--configuration", "Release", "--output", str(output), "--nologo", "--verbosity", "quiet"],
+        ["dotnet", str(output / "CenereExample.dll")],
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--require", help="comma-separated languages that must be available")
     args = parser.parse_args()
     required = set(args.require.split(",")) if args.require else set()
-    known = {"rust", "c", "cpp", "python", "node", "typescript", "php", "go", "java"}
+    known = {"rust", "c", "cpp", "python", "node", "typescript", "php", "go", "java", "csharp"}
     if required - known:
         parser.error(f"unknown language(s): {', '.join(sorted(required - known))}")
 
@@ -68,6 +86,7 @@ def main() -> int:
             "php": (["php"], ["php", str(ROOT / "php/main.php")]),
             "go": (["go"], ["go", "build", "-o", str(temp / "go"), str(ROOT / "go/main.go")]),
             "java": (["javac", "java"], ["javac", "-d", str(temp), str(ROOT / "java/Main.java")]),
+            "csharp": (["dotnet"], None),
         }
         runnable: dict[str, list[str]] = {}
         failures = 0
@@ -92,6 +111,14 @@ def main() -> int:
                     failures += 1
                     continue
                 runnable[language] = ["java", "-cp", str(temp), "Main"]
+            elif language == "csharp":
+                build, command = prepare_csharp(ROOT / "csharp/main.cs", temp, "main")
+                result = run(build)
+                if result.returncode:
+                    print(f"csharp: BUILD FAIL\n{result.stderr}")
+                    failures += 1
+                    continue
+                runnable[language] = command
             else:
                 runnable[language] = build
 
@@ -109,6 +136,7 @@ def main() -> int:
                 "python": "python/sum_int32.py", "node": "node/sum_int32.js",
                 "typescript": "typescript/sum_int32.ts", "php": "php/sum_int32.php",
                 "go": "go/sum_int32.go", "java": "java/SumInt32.java",
+                "csharp": "csharp/sum_int32.cs",
             }
             source_path = ROOT / sum_sources[language]
             if language == "rust":
@@ -126,6 +154,9 @@ def main() -> int:
             elif language == "java":
                 build = ["javac", "-d", str(temp), str(source_path)]
                 binary = None
+            elif language == "csharp":
+                build, sum_command = prepare_csharp(source_path, temp, "sum")
+                binary = None
             else:
                 build = None
                 binary = None
@@ -139,6 +170,8 @@ def main() -> int:
                 sum_command = [str(binary)]
             elif language == "java":
                 sum_command = ["java", "-cp", str(temp), "SumInt32"]
+            elif language == "csharp":
+                pass
             elif language == "php":
                 sum_command = ["php", str(source_path)]
             elif language in {"node", "typescript"}:

@@ -58,7 +58,7 @@ class MultistackDatasetTests(unittest.TestCase):
         train = read_jsonl(DATA_PROBLEM / "train.jsonl")
         valid = read_jsonl(DATA_PROBLEM / "valid.jsonl")
         evaluation = read_jsonl(DATA_PROBLEM / "eval.jsonl")
-        self.assertEqual((len(train), len(valid), len(evaluation)), (161, 53, 69))
+        self.assertEqual((len(train), len(valid), len(evaluation)), (163, 53, 69))
         self.assertEqual(sum(row["track"] == "problem-solving" for row in train), 12)
         self.assertEqual(sum(row["track"] == "problem-solving" for row in valid), 6)
         self.assertEqual(sum(row["track"] == "problem-solving" for row in evaluation), 10)
@@ -108,12 +108,12 @@ class MultistackDatasetTests(unittest.TestCase):
         for filename, content in rendered.items():
             self.assertEqual((DATA_V2 / filename).read_bytes(), content, filename)
         train = read_jsonl(DATA_V2 / "train.jsonl")
-        self.assertEqual(len(train), len(json.loads((ROOT / "curriculum/catalog.json").read_text())["tracks"]) * 3 + 10)
+        self.assertEqual(len(train), len(json.loads((ROOT / "curriculum/catalog.json").read_text())["tracks"]) * 3 + 11)
         code_rows = [row for row in train if row["id"].endswith("-code")]
-        self.assertEqual(len(code_rows), 10)
+        self.assertEqual(len(code_rows), 11)
         self.assertEqual(
             {row["track"] for row in code_rows},
-            {"c", "cpp", "php", "javascript-typescript", "nodejs", "python", "rust", "go-java"},
+            {"c", "cpp", "php", "javascript-typescript", "nodejs", "python", "rust", "go-java", "csharp"},
         )
         source_by_id = {
             f"{track}-beginner-normalize-list-{fence.lower()}-code": (source, fence)
@@ -136,11 +136,11 @@ class MultistackDatasetTests(unittest.TestCase):
     def test_code_execution_eval_is_held_out_and_covers_checked_stacks(self):
         train = {row["messages"][0]["content"] for row in read_jsonl(DATA_V2 / "train.jsonl")}
         code_eval = read_jsonl(DATA_V2 / "code-eval.jsonl")
-        self.assertEqual(len(code_eval), 10)
+        self.assertEqual(len(code_eval), 11)
         self.assertEqual(len({row["id"] for row in code_eval}), len(code_eval))
         self.assertEqual(
             {row["language"] for row in code_eval},
-            {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go", "java"},
+            {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go", "java", "csharp"},
         )
         self.assertTrue(all(row["prompt"] not in train for row in code_eval))
         self.assertTrue(all("return only" in row["prompt"].lower() for row in code_eval))
@@ -161,6 +161,13 @@ class MultistackDatasetTests(unittest.TestCase):
         failures = CODE_EVAL.check({"language": "java"}, f"```java\n{source}\n```")
         self.assertEqual(failures, [])
 
+    def test_csharp_normalizer_reference_passes_the_held_out_code_evaluator(self):
+        source = (ROOT / "curriculum/examples/polyglot/csharp/main.cs").read_text()
+        failures = CODE_EVAL.check({"language": "csharp"}, f"```csharp\n{source}\n```")
+        if failures == ["toolchain unavailable: dotnet"]:
+            self.skipTest(".NET SDK is not installed")
+        self.assertEqual(failures, [])
+
     def test_ecosystem_dataset_is_reproducible_split_safe_and_covers_all_new_tracks(self):
         rendered = BUILDER_V3.render()
         for filename, content in rendered.items():
@@ -168,7 +175,7 @@ class MultistackDatasetTests(unittest.TestCase):
         train = read_jsonl(DATA_V3 / "train.jsonl")
         valid = read_jsonl(DATA_V3 / "valid.jsonl")
         evaluation = read_jsonl(DATA_V3 / "eval.jsonl")
-        self.assertEqual(len(train), 103 + len(BUILDER_V3.TRAIN))
+        self.assertEqual(len(train), 93 + len(BUILDER_V2.EXAMPLES) + len(BUILDER_V3.TRAIN))
         self.assertEqual(len(valid), 31 + len(BUILDER_V3.VALID))
         self.assertEqual(len(evaluation), 31 + len(BUILDER_V3.EVAL))
         self.assertEqual({row["track"] for row in train if row["id"].startswith("ecosystem-")},
@@ -188,18 +195,18 @@ class MultistackDatasetTests(unittest.TestCase):
         valid = read_jsonl(DATA_V4 / "valid.jsonl")
         evaluation = read_jsonl(DATA_V4 / "eval.jsonl")
         code_eval = read_jsonl(DATA_V4 / "code-eval.jsonl")
-        self.assertEqual(len(train), 149)
+        self.assertEqual(len(train), 151)
         self.assertEqual(len(valid), 47)
         self.assertEqual(len(evaluation), 59)
-        self.assertEqual(len(code_eval), 20)
+        self.assertEqual(len(code_eval), 22)
         train_prompts = {row["messages"][0]["content"] for row in train}
         self.assertFalse(train_prompts & {row["messages"][0]["content"] for row in valid})
         self.assertFalse(train_prompts & {row["prompt"] for row in evaluation})
         self.assertFalse(train_prompts & {row["prompt"] for row in code_eval})
         sum_rows = [row for row in code_eval if row.get("exercise") == "sum-int32"]
-        self.assertEqual(len(sum_rows), 10)
+        self.assertEqual(len(sum_rows), 11)
         self.assertEqual({row["language"] for row in sum_rows},
-                         {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go", "java"})
+                         {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go", "java", "csharp"})
 
     def test_sum_int32_reference_programs_pass_executable_evaluator(self):
         sources = {
@@ -208,14 +215,29 @@ class MultistackDatasetTests(unittest.TestCase):
             "typescript": ("typescript/sum_int32.ts", "typescript"), "nodejs": ("node/sum_int32.js", "javascript"),
             "python": ("python/sum_int32.py", "python"), "rust": ("rust/sum_int32.rs", "rust"),
             "go": ("go/sum_int32.go", "go"), "java": ("java/SumInt32.java", "java"),
+            "csharp": ("csharp/sum_int32.cs", "csharp"),
         }
         for language, (relative, fence) in sources.items():
             with self.subTest(language=language):
                 answer = f"```{fence}\n{(ROOT / 'curriculum/examples/polyglot' / relative).read_text()}\n```"
                 failures = CODE_EVAL.check({"language": language, "exercise": "sum-int32"}, answer)
+                if language == "csharp" and failures == ["toolchain unavailable: dotnet"]:
+                    self.skipTest(".NET SDK is not installed")
                 if language == "java" and failures == ["toolchain unavailable: java runtime"]:
                     self.skipTest("Java runtime is not installed")
+                if language == "csharp" and failures == ["toolchain unavailable: dotnet"]:
+                    self.skipTest(".NET SDK is not installed")
                 self.assertEqual(failures, [])
+
+    def test_csharp_compile_failures_include_compiler_diagnostics(self):
+        failures = CODE_EVAL.check(
+            {"language": "csharp", "exercise": "sum-int32"},
+            "```csharp\nnot valid C#;\n```",
+        )
+        if failures == ["toolchain unavailable: dotnet"]:
+            self.skipTest(".NET SDK is not installed")
+        self.assertIn("compile failed", failures[0])
+        self.assertIn("error CS", failures[0])
 
     def test_new_ecosystem_tracks_link_to_official_documentation(self):
         catalog = json.loads((ROOT / "curriculum/catalog.json").read_text())

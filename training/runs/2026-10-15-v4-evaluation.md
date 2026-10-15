@@ -2,7 +2,7 @@
 
 ## Training
 
-V4 contains 149 training rows, 47 validation rows, 59 rubric evaluation prompts, and 20 executable coding prompts. The new coding task asks for a standalone program in ten language labels that reads exactly two signed 32-bit integers, prints their sum, and rejects malformed input and overflow. The checked-in reference programs pass seven input cases per language.
+V4 contains 151 training rows, 47 validation rows, 59 rubric evaluation prompts, and 22 executable coding prompts. The signed 32-bit sum task asks for a standalone program in eleven language targets, including C#/.NET 10; the normalizer task adds a second C# executable example. The checked-in reference programs pass seven input cases per task.
 
 Trained Qwen2.5-Coder-3B-Instruct-4bit with MLX LoRA on an Apple M3 with 24 GiB unified memory. The run used batch size 1, one trainable layer (0.013% of parameters), sequence limit 1024, two validation batches, and 150 iterations. Initial validation loss was 5.616; final validation loss was 2.018 and final training loss was 2.325. No examples were truncated at this sequence limit.
 
@@ -23,3 +23,7 @@ Keep training, validation, and final test prompts disjoint. Do not move a held-o
 ## Outcome
 
 Keep the adapter as an unpromoted experiment at `training/adapters/cenere-multistack-v4-candidate`. Restore the base model as the default. Continue by improving reviewed code examples and using compiler/runtime feedback as training signals, while holding out a fresh executable test set for each comparison.
+
+## C# follow-up
+
+Added C# reference implementations for both executable tasks and built them with .NET SDK 10.0.402. On separately worded held-out prompts, the base checkpoint scored 0/2 on compile-and-run evaluation. A second 150-iteration, one-layer LoRA candidate trained on the expanded 151-row dataset also scored 0/2; it passed the simple fence/keyword rubric 2/2 while failing executable behavior. The normalizer response repeated using directives instead of providing a complete program, and the sum response accepted 32-bit overflow and failed required rejection cases. Keep `training/adapters/cenere-multistack-v4-csharp-both-candidate` unpromoted. This confirms that lexical checks and lower training loss cannot stand in for execution-based problem solving. The C# heldout cases are small diagnostic examples, not a broad C# competence score.

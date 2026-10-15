@@ -33,6 +33,11 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
 
@@ -58,7 +63,7 @@ jobs:
         run: python3 curriculum/datasets/build_problem_solving_v1.py --check
 
       - name: Compile and run polyglot exercise
-        run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript,java
+        run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript,php,go,java,csharp
 
       - name: Build production container
         run: docker build --tag cenere-ai:ci .

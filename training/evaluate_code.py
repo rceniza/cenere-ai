@@ -39,6 +39,7 @@ LANGUAGES = {
     "rust": ("rustc", "main.rs", ["rustc", "--edition=2021"]),
     "go": ("go", "main.go", ["go", "build"]),
     "java": ("javac", "Main.java", ["javac"]),
+    "csharp": ("dotnet", "Program.cs", None),
 }
 
 
@@ -54,6 +55,7 @@ def fenced_code(answer: str, language: str) -> Optional[str]:
         "rust": {"rust", "rs"},
         "go": {"go"},
         "java": {"java"},
+        "csharp": {"csharp", "cs"},
     }
     for match in re.finditer(r"```([^\s`]*)[^\n]*\n(.*?)```", answer, re.DOTALL):
         if match.group(1).lower() in aliases.get(language, set()):
@@ -90,13 +92,28 @@ def check(case: dict, answer: str) -> list[str]:
         temp = Path(temp_name)
         exercise = case.get("exercise", "normalize-list")
         if exercise == "sum-int32":
-            sum_files = {"c": "sum_int32.c", "cpp": "sum_int32.cpp", "php": "sum_int32.php", "javascript": "sum_int32.js", "typescript": "sum_int32.ts", "nodejs": "sum_int32.js", "python": "sum_int32.py", "rust": "sum_int32.rs", "go": "sum_int32.go", "java": "SumInt32.java"}
+            sum_files = {"c": "sum_int32.c", "cpp": "sum_int32.cpp", "php": "sum_int32.php", "javascript": "sum_int32.js", "typescript": "sum_int32.ts", "nodejs": "sum_int32.js", "python": "sum_int32.py", "rust": "sum_int32.rs", "go": "sum_int32.go", "java": "SumInt32.java", "csharp": "Program.cs"}
             filename = sum_files[language]
         elif exercise != "normalize-list":
             return [f"unsupported exercise {exercise}"]
         source_path = temp / filename
         source_path.write_text(source + "\n", encoding="utf-8")
-        if language in {"c", "cpp", "rust", "go", "java"}:
+        if language == "csharp":
+            project = temp / "Generated.csproj"
+            project.write_text(
+                '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>'
+                '<TargetFramework>net10.0</TargetFramework><ImplicitUsings>disable</ImplicitUsings>'
+                '<Nullable>enable</Nullable></PropertyGroup></Project>',
+                encoding="utf-8",
+            )
+            output = temp / "out"
+            build = [command_name, "build", str(project), "--configuration", "Release", "--output", str(output), "--nologo", "--verbosity", "quiet"]
+            result = subprocess.run(build, text=True, capture_output=True, timeout=120, check=False)
+            if result.returncode:
+                diagnostics = (result.stdout + result.stderr)[-1200:]
+                return ["compile failed: " + diagnostics]
+            command = [command_name, str(output / "Generated.dll")]
+        elif language in {"c", "cpp", "rust", "go", "java"}:
             binary = temp / "program"
             if language in {"c", "cpp", "rust"}:
                 build = [*compiler, str(source_path), "-o", str(binary)]

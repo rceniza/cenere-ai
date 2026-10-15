@@ -20,6 +20,7 @@ EXAMPLES = [
     ("rust", "Rust", "rust/sum_int32.rs", "rust"),
     ("go", "Go", "go/sum_int32.go", "go"),
     ("java", "Java", "java/SumInt32.java", "java"),
+    ("csharp", "C#", "csharp/sum_int32.cs", "csharp"),
 ]
 
 CORRECTIONS = [
