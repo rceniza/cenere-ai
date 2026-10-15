@@ -18,6 +18,16 @@ EXAMPLES = [
     ("rust", "Rust", "rust/main.rs", "Rust"),
     ("go-java", "Go", "go/main.go", "Go"),
 ]
+CODE_EVAL = [
+    ("c", "C", "c"),
+    ("cpp", "C++", "cpp"),
+    ("php", "PHP", "php"),
+    ("javascript-typescript", "JavaScript", "javascript"),
+    ("nodejs", "Node.js", "nodejs"),
+    ("python", "Python", "python"),
+    ("rust", "Rust", "rust"),
+    ("go-java", "Go", "go"),
+]
 
 
 def lines(path: Path) -> list[dict]:
@@ -56,10 +66,27 @@ def render() -> dict[str, bytes]:
     require(not train_prompts & valid_prompts, "train and validation prompts overlap")
     require(not train_prompts & eval_prompts, "training prompts overlap held-out evaluation")
     require(len(valid) == 25 and len(evaluation) == 25, "held-out v1 split sizes changed unexpectedly")
+    code_eval = []
+    for track, display, language in CODE_EVAL:
+        code_eval.append({
+            "id": f"code-{track}-heldout",
+            "track": track,
+            "level": "beginner",
+            "language": language,
+            "must_include": ["```"],
+            "prompt": (
+                f"In {display}, write a standalone stdin program that accepts one comma-delimited line of signed 32-bit integers, "
+                "outputs a JSON array in ascending order with duplicates removed, and outputs [] when the line is blank. "
+                "Reject a malformed token or out-of-range integer by exiting nonzero and writing nothing to stdout. "
+                "Return only one fenced source code block; do not explain it."
+            ),
+        })
+    require(not {row["prompt"] for row in code_eval} & train_prompts, "code evaluation prompt overlaps training")
     return {
         "train.jsonl": encode(train),
         "valid.jsonl": encode(valid),
         "eval.jsonl": encode(evaluation),
+        "code-eval.jsonl": encode(code_eval),
     }
 
 

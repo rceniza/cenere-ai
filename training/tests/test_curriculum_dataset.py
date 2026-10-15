@@ -17,6 +17,9 @@ SPEC_V2 = importlib.util.spec_from_file_location(
 )
 BUILDER_V2 = importlib.util.module_from_spec(SPEC_V2)
 SPEC_V2.loader.exec_module(BUILDER_V2)
+SPEC_CODE_EVAL = importlib.util.spec_from_file_location("evaluate_code", ROOT / "training/evaluate_code.py")
+CODE_EVAL = importlib.util.module_from_spec(SPEC_CODE_EVAL)
+SPEC_CODE_EVAL.loader.exec_module(CODE_EVAL)
 
 
 def read_jsonl(path):
@@ -82,6 +85,22 @@ class MultistackDatasetTests(unittest.TestCase):
         evaluation = {row["prompt"] for row in read_jsonl(DATA_V2 / "eval.jsonl")}
         self.assertFalse(train & valid)
         self.assertFalse(train & evaluation)
+
+    def test_code_execution_eval_is_held_out_and_covers_checked_stacks(self):
+        train = {row["messages"][0]["content"] for row in read_jsonl(DATA_V2 / "train.jsonl")}
+        code_eval = read_jsonl(DATA_V2 / "code-eval.jsonl")
+        self.assertEqual(len(code_eval), 8)
+        self.assertEqual(
+            {row["language"] for row in code_eval},
+            {"c", "cpp", "php", "javascript", "nodejs", "python", "rust", "go"},
+        )
+        self.assertTrue(all(row["prompt"] not in train for row in code_eval))
+        self.assertTrue(all("return only" in row["prompt"].lower() for row in code_eval))
+
+    def test_code_evaluator_extracts_fenced_sources_and_rejects_missing_code(self):
+        self.assertEqual(CODE_EVAL.fenced_code("```python\nprint('ok')\n```", "python"), "print('ok')")
+        self.assertIsNone(CODE_EVAL.fenced_code("I cannot provide code.", "python"))
+        self.assertIsNone(CODE_EVAL.fenced_code("```bash\necho wrong language\n```", "python"))
 
 
 if __name__ == "__main__":

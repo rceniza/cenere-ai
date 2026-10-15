@@ -117,6 +117,12 @@ training/.venv/bin/python training/train.py \
 training/.venv/bin/python training/evaluate.py \
   --cases curriculum/datasets/cenere-multistack-v2/eval.jsonl \
   --output /tmp/cenere-multistack-v2-base.jsonl
+training/.venv/bin/python training/evaluate.py \
+  --cases curriculum/datasets/cenere-multistack-v2/code-eval.jsonl \
+  --max-tokens 600 --output /tmp/cenere-multistack-v2-code-predictions.jsonl
+training/.venv/bin/python training/evaluate_code.py \
+  --cases curriculum/datasets/cenere-multistack-v2/code-eval.jsonl \
+  --predictions /tmp/cenere-multistack-v2-code-predictions.jsonl
 ```
 
 Run the same evaluation with `--endpoint http://127.0.0.1:8081/v1/chat/completions` against a local candidate server that loads the adapter. See the v2 dataset README for its scope and limitations.
