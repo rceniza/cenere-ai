@@ -34,7 +34,7 @@ The suggested starter is a 3B 4-bit MLX coding model; its local files are about 
 
 The `mlx-lm` project supports LoRA/QLoRA, validation data, and low-memory adjustments such as smaller batches or fewer layers. See its [fine-tuning guide](https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md) before changing training options.
 
-For the correction and code-generation experiment, use [`cenere-multistack-v4`](../curriculum/datasets/cenere-multistack-v4/README.md). It now includes an executable C# task targeting .NET 10. For debugging, planning, research, tool choice, testing, and calibrated uncertainty, use [`cenere-problem-solving-v1`](../curriculum/datasets/cenere-problem-solving-v1/README.md). It builds on v4 and keeps its new prompts split between training, validation, and held-out evaluation. Compare base and adapter on held-out behavior and executable checks; lower loss alone does not establish improvement.
+For the correction and code-generation experiment, use [`cenere-multistack-v4`](../curriculum/datasets/cenere-multistack-v4/README.md). It now includes an executable C# task targeting .NET 10. For problem-solving, [`cenere-problem-solving-v2`](../curriculum/datasets/cenere-problem-solving-v2/README.md) adds evidence-led debugging and operational scenarios on top of v1. Compare the base and adapter on held-out behavior and executable checks; lower loss alone does not establish improvement.
 
 The MLX server can serve an adapter at startup, without fusing another model copy. Stop the existing server before using the same port, or use a second port for a side-by-side evaluation:
 

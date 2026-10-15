@@ -62,6 +62,9 @@ jobs:
       - name: Verify problem-solving training data is reproducible
         run: python3 curriculum/datasets/build_problem_solving_v1.py --check
 
+      - name: Verify evidence-led problem-solving data is reproducible
+        run: python3 curriculum/datasets/build_problem_solving_v2.py --check
+
       - name: Compile and run polyglot exercise
         run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript,php,go,java,csharp
 
