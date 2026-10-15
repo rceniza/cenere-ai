@@ -12,11 +12,11 @@
 | Measure | Base | Candidate |
 | --- | ---: | ---: |
 | Broad held-out rubric pass | 5/25 (20%) | 4/25 (16%) for the 10-iteration adapter |
-| Executable code benchmark | 0/8 | 0/8 for both 10- and 100-iteration adapters |
-| Validation loss reported during run | — | 4.796 at initial validation, 4.675 at iteration 10 |
-| Training loss | — | 4.524 at iteration 10; 2.318 at iteration 100 |
+| Executable code benchmark | 0/8 | 0/8 for 10-iteration, 100-iteration, and 100-iteration/8-layer adapters |
+| Validation loss | — | 4.796 initially; 4.675 at 10 iterations; 2.678 at 100 iterations/1 layer; 2.319 at 100 iterations/8 layers |
+| Training loss | — | 4.524 at 10 iterations; 2.318 at 100 iterations/1 layer; 1.824 at 100 iterations/8 layers |
 
-The adapter was not promoted because its broad held-out score regressed and it did not pass any executable code case, even after 100 iterations. The source reference implementations passed all eight executable cases. The rubric is a narrow keyword and forbidden-claim screen, not a semantic correctness test. Training loss fell substantially without yielding correct generated programs; this trial is direct evidence that loss alone is not a good promotion signal. Predictions were written under `/tmp` and are not part of the repository.
+The adapters were not promoted because the 10-iteration candidate regressed on the broad held-out score and none of the candidates passed an executable code case, even after 100 iterations and eight trainable layers. The source reference implementations passed all eight executable cases. The rubric is a narrow keyword and forbidden-claim screen, not a semantic correctness test. Training loss fell substantially without yielding correct generated programs; this trial is direct evidence that loss alone is not a good promotion signal. Predictions were written under `/tmp` and are not part of the repository.
 
 ## Scope and next data work
 
