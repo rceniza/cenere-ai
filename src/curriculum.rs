@@ -91,6 +91,27 @@ fn reference_source(reference: &str) -> Result<&'static str> {
         "examples/rust/parse_integers.rs" => Ok(include_str!(
             "../curriculum/examples/rust/parse_integers.rs"
         )),
+        "examples/polyglot/c/main.c" => {
+            Ok(include_str!("../curriculum/examples/polyglot/c/main.c"))
+        }
+        "examples/polyglot/cpp/main.cpp" => {
+            Ok(include_str!("../curriculum/examples/polyglot/cpp/main.cpp"))
+        }
+        "examples/polyglot/php/main.php" => {
+            Ok(include_str!("../curriculum/examples/polyglot/php/main.php"))
+        }
+        "examples/polyglot/node/main.js" => {
+            Ok(include_str!("../curriculum/examples/polyglot/node/main.js"))
+        }
+        "examples/polyglot/python/main.py" => Ok(include_str!(
+            "../curriculum/examples/polyglot/python/main.py"
+        )),
+        "examples/polyglot/rust/main.rs" => {
+            Ok(include_str!("../curriculum/examples/polyglot/rust/main.rs"))
+        }
+        "examples/polyglot/go/main.go" => {
+            Ok(include_str!("../curriculum/examples/polyglot/go/main.go"))
+        }
         _ => anyhow::bail!("unsupported curriculum reference '{reference}'"),
     }
 }
@@ -108,6 +129,16 @@ pub fn reference_example(
         .transpose()
 }
 
+pub fn reference_language(
+    track_id: &str,
+    level: &str,
+    lesson_number: usize,
+) -> Result<Option<String>> {
+    let catalog = catalog()?;
+    let (_, _, lesson) = lookup_lesson(&catalog, track_id, level, lesson_number)?;
+    Ok(lesson["language"].as_str().map(str::to_owned))
+}
+
 pub fn lesson_prompt(track_id: &str, level: &str, lesson_number: usize) -> Result<String> {
     let catalog = catalog()?;
     let (track, stage, lesson) = lookup_lesson(&catalog, track_id, level, lesson_number)?;
@@ -117,9 +148,18 @@ pub fn lesson_prompt(track_id: &str, level: &str, lesson_number: usize) -> Resul
         stage["goal"].as_str().unwrap_or(""), lesson["title"].as_str().unwrap_or(""),
         lesson["practice"].as_str().unwrap_or("")
     );
+    if let Some(steps) = lesson["steps"].as_array() {
+        prompt.push_str("\n\nTeach the learner in this sequence; explain and check understanding at each step:\n");
+        for (index, step) in steps.iter().enumerate() {
+            prompt.push_str(&format!("{}. {}\n", index + 1, step.as_str().unwrap_or("")));
+        }
+    }
     if let Some(reference) = lesson["reference"].as_str() {
         let source = reference_source(reference)?;
-        prompt.push_str("\n\nVerified reference implementation (use this exact API and behavior in your explanation; do not replace i64 with another integer type):\n```rust\n");
+        let language = lesson["language"].as_str().unwrap_or("text");
+        prompt.push_str(&format!(
+            "\n\nVerified reference implementation (use this exact implementation and behavior in your explanation):\n```{language}\n"
+        ));
         prompt.push_str(source);
         prompt.push_str("\n```");
     }
@@ -152,6 +192,7 @@ mod tests {
         assert!(prompt.contains("line.parse::<i64>()"));
         assert!(prompt.contains("Do not use a regex"));
         assert!(prompt.contains("Verified reference implementation"));
+        assert!(prompt.contains("```rust"));
         assert!(reference_example("rust", "beginner", 1).unwrap().is_some());
         assert!(reference_example("rust", "intermediate", 1)
             .unwrap()
@@ -160,5 +201,28 @@ mod tests {
         assert!(lesson_prompt("rust", "expert", 1).is_err());
         assert!(lesson_prompt("rust", "beginner", 0).is_err());
         assert!(lesson_prompt("rust", "beginner", 99).is_err());
+    }
+
+    #[test]
+    fn polyglot_worked_lessons_include_the_matching_verified_reference() {
+        let cases = [
+            ("c", "c", "#include <stdio.h>"),
+            ("cpp", "cpp", "#include <iostream>"),
+            ("php", "php", "<?php"),
+            ("javascript-typescript", "javascript", "node:readline"),
+            ("nodejs", "javascript", "node:readline"),
+            ("python", "python", "def normalize"),
+            ("rust", "rust", "fn parse"),
+            ("go-java", "go", "package main"),
+        ];
+        for (track, language, source_marker) in cases {
+            let prompt = lesson_prompt(track, "beginner", 3).unwrap();
+            assert!(prompt.contains(&format!("```{language}")), "{track}");
+            assert!(prompt.contains(source_marker), "{track}");
+            assert!(
+                prompt.contains("1. Read one complete input line"),
+                "{track}"
+            );
+        }
     }
 }

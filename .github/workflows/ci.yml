@@ -34,6 +34,9 @@ jobs:
       - name: Verify curriculum data is reproducible
         run: python3 curriculum/datasets/build_multistack_v1.py --check
 
+      - name: Verify code-focused training data is reproducible
+        run: python3 curriculum/datasets/build_multistack_v2.py --check
+
       - name: Compile and run polyglot exercise
         run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node
 

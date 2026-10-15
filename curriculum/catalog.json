@@ -67,6 +67,19 @@
             {
               "title": "Arrays and strings",
               "practice": "Write a safe string length and copy routine with boundary tests."
+            },
+            {
+              "title": "Worked exercise: normalize integer lists in C",
+              "practice": "Implement the shared comma-separated integer-list contract in C: print sorted unique signed 32-bit integers as JSON, print [] for empty input, and reject malformed or out-of-range tokens. Then change the output order to descending and verify the empty, duplicate, malformed, and boundary cases.",
+              "steps": [
+                "Read one complete input line and define what empty input means.",
+                "Split the line into tokens, trim surrounding whitespace, and parse each token without silently accepting trailing characters.",
+                "Reject malformed values and values outside the signed 32-bit range before storing them.",
+                "Sort the values, remove duplicates, and serialize one JSON array.",
+                "Test empty input, duplicates, negatives, minimum and maximum values, an empty token, and overflow; then change sorting to descending and rerun the tests."
+              ],
+              "reference": "examples/polyglot/c/main.c",
+              "language": "c"
             }
           ]
         },
@@ -116,6 +129,19 @@
             {
               "title": "Classes and basic tests",
               "practice": "Model a bank account with invariants and unit tests."
+            },
+            {
+              "title": "Worked exercise: normalize integer lists in C++",
+              "practice": "Implement the shared comma-separated integer-list contract in C++: print sorted unique signed 32-bit integers as JSON, print [] for empty input, and reject malformed or out-of-range tokens. Then change the output order to descending and verify the empty, duplicate, malformed, and boundary cases.",
+              "steps": [
+                "Read one complete input line and define what empty input means.",
+                "Split the line into tokens, trim surrounding whitespace, and parse each token without silently accepting trailing characters.",
+                "Reject malformed values and values outside the signed 32-bit range before storing them.",
+                "Sort the values, remove duplicates, and serialize one JSON array.",
+                "Test empty input, duplicates, negatives, minimum and maximum values, an empty token, and overflow; then change sorting to descending and rerun the tests."
+              ],
+              "reference": "examples/polyglot/cpp/main.cpp",
+              "language": "cpp"
             }
           ]
         },
@@ -214,6 +240,19 @@
             {
               "title": "Composer and namespaces",
               "practice": "Package a small reusable validation library."
+            },
+            {
+              "title": "Worked exercise: normalize integer lists in PHP",
+              "practice": "Implement the shared comma-separated integer-list contract in PHP: print sorted unique signed 32-bit integers as JSON, print [] for empty input, and reject malformed or out-of-range tokens. Then change the output order to descending and verify the empty, duplicate, malformed, and boundary cases.",
+              "steps": [
+                "Read one complete input line and define what empty input means.",
+                "Split the line into tokens, trim surrounding whitespace, and parse each token without silently accepting trailing characters.",
+                "Reject malformed values and values outside the signed 32-bit range before storing them.",
+                "Sort the values, remove duplicates, and serialize one JSON array.",
+                "Test empty input, duplicates, negatives, minimum and maximum values, an empty token, and overflow; then change sorting to descending and rerun the tests."
+              ],
+              "reference": "examples/polyglot/php/main.php",
+              "language": "php"
             }
           ]
         },
@@ -263,6 +302,19 @@
             {
               "title": "DOM and events",
               "practice": "Create an accessible form with inline error handling."
+            },
+            {
+              "title": "Worked exercise: normalize integer lists in JavaScript",
+              "practice": "Implement the shared comma-separated integer-list contract in JavaScript: print sorted unique signed 32-bit integers as JSON, print [] for empty input, and reject malformed or out-of-range tokens. Then change the output order to descending and verify the empty, duplicate, malformed, and boundary cases.",
+              "steps": [
+                "Read one complete input line and define what empty input means.",
+                "Split the line into tokens, trim surrounding whitespace, and parse each token without silently accepting trailing characters.",
+                "Reject malformed values and values outside the signed 32-bit range before storing them.",
+                "Sort the values, remove duplicates, and serialize one JSON array.",
+                "Test empty input, duplicates, negatives, minimum and maximum values, an empty token, and overflow; then change sorting to descending and rerun the tests."
+              ],
+              "reference": "examples/polyglot/node/main.js",
+              "language": "javascript"
             }
           ]
         },
@@ -312,6 +364,19 @@
             {
               "title": "HTTP routes",
               "practice": "Create a JSON API with correct status codes and input validation."
+            },
+            {
+              "title": "Worked exercise: normalize integer lists in JavaScript on Node.js",
+              "practice": "Implement the shared comma-separated integer-list contract in JavaScript on Node.js: print sorted unique signed 32-bit integers as JSON, print [] for empty input, and reject malformed or out-of-range tokens. Then change the output order to descending and verify the empty, duplicate, malformed, and boundary cases.",
+              "steps": [
+                "Read one complete input line and define what empty input means.",
+                "Split the line into tokens, trim surrounding whitespace, and parse each token without silently accepting trailing characters.",
+                "Reject malformed values and values outside the signed 32-bit range before storing them.",
+                "Sort the values, remove duplicates, and serialize one JSON array.",
+                "Test empty input, duplicates, negatives, minimum and maximum values, an empty token, and overflow; then change sorting to descending and rerun the tests."
+              ],
+              "reference": "examples/polyglot/node/main.js",
+              "language": "javascript"
             }
           ]
         },
@@ -459,6 +524,19 @@
             {
               "title": "Exceptions and tests",
               "practice": "Add tests for normal, boundary, and malformed input."
+            },
+            {
+              "title": "Worked exercise: normalize integer lists in Python",
+              "practice": "Implement the shared comma-separated integer-list contract in Python: print sorted unique signed 32-bit integers as JSON, print [] for empty input, and reject malformed or out-of-range tokens. Then change the output order to descending and verify the empty, duplicate, malformed, and boundary cases.",
+              "steps": [
+                "Read one complete input line and define what empty input means.",
+                "Split the line into tokens, trim surrounding whitespace, and parse each token without silently accepting trailing characters.",
+                "Reject malformed values and values outside the signed 32-bit range before storing them.",
+                "Sort the values, remove duplicates, and serialize one JSON array.",
+                "Test empty input, duplicates, negatives, minimum and maximum values, an empty token, and overflow; then change sorting to descending and rerun the tests."
+              ],
+              "reference": "examples/polyglot/python/main.py",
+              "language": "python"
             }
           ]
         },
@@ -504,11 +582,31 @@
             {
               "title": "Types, functions, and cargo",
               "practice": "Build a CLI that reads a text file of signed integers, parses each line with line.parse::<i64>(), reports invalid lines with line numbers, and uses only the Rust standard library. Do not use a regex, external crate, nonexistent i64::parse API, or unused imports.",
-              "reference": "examples/rust/parse_integers.rs"
+              "reference": "examples/rust/parse_integers.rs",
+              "language": "rust",
+              "steps": [
+                "Read the input one line at a time and keep the original line number.",
+                "Trim line endings and parse each remaining line as i64.",
+                "Report malformed lines with their line numbers while continuing to later input.",
+                "Run the sample cases for valid, empty, and malformed lines, then add a minimum and maximum i64 case."
+              ]
             },
             {
               "title": "Ownership and borrowing",
               "practice": "Refactor needless clones and explain each borrow lifetime."
+            },
+            {
+              "title": "Worked exercise: normalize integer lists in Rust",
+              "practice": "Implement the shared comma-separated integer-list contract in Rust: print sorted unique signed 32-bit integers as JSON, print [] for empty input, and reject malformed or out-of-range tokens. Then change the output order to descending and verify the empty, duplicate, malformed, and boundary cases.",
+              "steps": [
+                "Read one complete input line and define what empty input means.",
+                "Split the line into tokens, trim surrounding whitespace, and parse each token without silently accepting trailing characters.",
+                "Reject malformed values and values outside the signed 32-bit range before storing them.",
+                "Sort the values, remove duplicates, and serialize one JSON array.",
+                "Test empty input, duplicates, negatives, minimum and maximum values, an empty token, and overflow; then change sorting to descending and rerun the tests."
+              ],
+              "reference": "examples/polyglot/rust/main.rs",
+              "language": "rust"
             }
           ]
         },
@@ -558,6 +656,19 @@
             {
               "title": "Packages and build tools",
               "practice": "Split code into packages/modules and add automated tests."
+            },
+            {
+              "title": "Worked exercise: normalize integer lists in Go",
+              "practice": "Implement the shared comma-separated integer-list contract in Go: print sorted unique signed 32-bit integers as JSON, print [] for empty input, and reject malformed or out-of-range tokens. Then change the output order to descending and verify the empty, duplicate, malformed, and boundary cases.",
+              "steps": [
+                "Read one complete input line and define what empty input means.",
+                "Split the line into tokens, trim surrounding whitespace, and parse each token without silently accepting trailing characters.",
+                "Reject malformed values and values outside the signed 32-bit range before storing them.",
+                "Sort the values, remove duplicates, and serialize one JSON array.",
+                "Test empty input, duplicates, negatives, minimum and maximum values, an empty token, and overflow; then change sorting to descending and rerun the tests."
+              ],
+              "reference": "examples/polyglot/go/main.go",
+              "language": "go"
             }
           ]
         },

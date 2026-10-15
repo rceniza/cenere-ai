@@ -4,7 +4,7 @@ A local-first coding assistant with a Rust CLI and web app, SQLite memory, seque
 
 ## Run the model
 
-The Python 3.12 environment and a 3B 4-bit coder model are prepared in this checkout. From the repository root:
+The Python 3.12 environment and a local 3B 4-bit Qwen coder checkpoint are prepared in this checkout. Cenere is the CLI, web app, tool runner, memory store, and training workflow; it does not call Codex or Claude as an agent. The checkpoint is an existing open-weights model, not a model pretrained from scratch. Cenere can run it locally and train small LoRA adapters from reviewed, curated examples. Optional live search uses the internet. See [the model card](https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct) for the base model's documented scope and limitations. From the repository root:
 
 ```sh
 training/.venv/bin/mlx_lm.server \
@@ -47,7 +47,7 @@ cargo install --path .
 cenere-ai
 ```
 
-With no subcommand, choose coding, chat, or guided study. Coding asks for a workspace and lets you select the source files sent to the model. It then offers per-action approval mode or read-only proposal mode. In approval mode, Cenere asks before every shell command, browser request, and patch application. In read-only mode, it cannot run tools or apply patches.
+With no subcommand, choose coding, chat, or guided study. Coding asks for a workspace and lets you select the source files sent to the model. It offers ask-before-each-action, read-only, or accept-all permissions for the session. Ask mode confirms each shell command, browser request, and patch application. Read-only mode cannot run tools or apply patches. Accept-all skips those prompts for the current process/session and can run arbitrary shell commands or modify the workspace; use it only when you accept that risk.
 
 You can also launch the coding workspace directly:
 
@@ -55,7 +55,7 @@ You can also launch the coding workspace directly:
 cenere-ai terminal --repo /path/to/project --file src/main.rs
 ```
 
-Enter coding tasks. The planner, coder, and reviewer roles run sequentially through one model server, using the selected files (up to 48 KB total). The agent can request native OpenAI-compatible `tool_calls` for a shell command, web search, or page inspection; exact legacy XML tool requests remain supported for compatible local models. Cenere offers one tool at a time and requires your confirmation before each action. Tool output is passed back as untrusted context. At the prompt, `! cargo check` runs a command after confirmation. For one task, use:
+Enter coding tasks. The planner, coder, and reviewer roles run sequentially through one local model server, using the selected files (up to 48 KB total). The agent can request native OpenAI-compatible `tool_calls` for a shell command, web search, or page inspection; exact legacy XML tool requests remain supported for compatible local models. Ask mode offers one tool at a time and requires confirmation; accept-all is an explicit opt-in. Tool output is passed back as untrusted context. At the prompt, `! cargo check` runs a command after confirmation. For one task, use:
 
 Tool availability does not guarantee the model will choose to call a tool. The current local Qwen 3B model sometimes returns a proposal without using an explicitly requested web tool; use a tool-call-tuned model or verify live information yourself when it skips the request.
 
@@ -63,7 +63,7 @@ Tool availability does not guarantee the model will choose to call a tool. The c
 cargo run -- code --repo /path/to/project --file src/main.rs "Add input validation"
 ```
 
-Add `--apply` to validate the diff and ask before applying it. The terminal accepts explicit file selection; if none is supplied, it lists source files and asks which ones to include. Browser tools run on the host, not inside the Docker web container.
+Add `--apply` to validate the diff and ask before applying it. To start a new app in an empty workspace, omit `--file`; Cenere asks whether to begin with an empty project context and can include multiple new files in its patch. Increase code response length with `CENERE_CODE_MAX_TOKENS` (default 3072; allowed range 256–8192). `--accept-all` can be used for an explicit one-process coding session, for example `cenere-ai --accept-all terminal --repo /path/to/project`; adding `--apply` to `cenere-ai --accept-all code ...` also applies a checked patch without another prompt. Accept-all does not mark its changes as reviewed training examples. The terminal accepts explicit file selection; if none is supplied, it lists source files and asks which ones to include. Browser tools run on the host, not inside the Docker web container. See [CLI design research](docs/cli-research.md) for the open-source comparisons and current permission gaps.
 
 ## Step-by-step learning tracks
 
@@ -86,7 +86,7 @@ cargo run -- teach "How should this project validate input?" "Use the shared val
 cargo run -- export-training
 ```
 
-The web chat has a correction form and a **Helpful · save reviewed example** action. In the interactive CLI, type `/good` after an answer to approve it as a learning example. A coding patch is saved as a user-approved example only after you approve and apply it. These are human signals, not proof of correctness; run relevant tests before approving coding results. Unreviewed model output is never automatically treated as training truth. Project memory is retrieved from SQLite while answering. CLI and web chat expose read-only web search; the coding CLI additionally offers shell and page-inspection tools behind per-action approval. Only the latest four exchanges are sent as raw chat history. Use `/compact` in CLI or the web **Compact** button to summarize stored turns to SQLite before clearing the raw transcript; the summary and recent turns then provide bounded continuity.
+The web chat has a correction form and a **Helpful · save reviewed example** action. In the interactive CLI, type `/good` after an answer to approve it as a learning example. In ask mode, a coding patch enters the reviewed-example set only after you approve and apply it. Accept-all can apply code but does not add that code to training. These are human signals, not proof of correctness; run relevant tests before approving coding results. Unreviewed model output is never automatically treated as training truth. Project memory is retrieved from SQLite while answering. CLI and web chat expose read-only web search; the coding CLI additionally offers shell and page-inspection tools behind its permission mode. Only the latest four exchanges are sent as raw chat history. Use `/compact` in CLI or the web **Compact** button to summarize stored turns to SQLite before clearing the raw transcript; the summary and recent turns then provide bounded continuity.
 
 On a configured Apple Silicon host, every eight newly reviewed examples trigger a small background LoRA job automatically; you do not need to run `cenere-ai train`. Training competes with inference for unified memory and may slow responses. Configure the local MLX environment and model as described above. Docker can collect reviewed examples in its SQLite database, but does not train inside the container; export those examples and run training on the configured host. Training creates a candidate adapter and does not switch the live model automatically. Evaluate, fuse, and restart the model server with the adapter before it affects answers. The separate manual command remains available when you want to start a training job explicitly:
 
@@ -96,7 +96,7 @@ cenere-ai train --iters 30 --num-layers 1
 
 SQLite memory can influence answers immediately. Fine-tuning changes weights only when a candidate passes evaluation and is explicitly configured in the model server; Cenere does not hot-swap adapters into a running model process.
 
-The initial Rust sample is in [`curriculum/datasets/rust-foundations-v1`](curriculum/datasets/rust-foundations-v1). The broader curated seed spans 25 tracks and all three curriculum stages in [`curriculum/datasets/cenere-multistack-v1`](curriculum/datasets/cenere-multistack-v1): 75 train, 25 validation, and 25 held-out rubric cases. Build the examples and run its base-model benchmark with:
+The initial Rust sample is in [`curriculum/datasets/rust-foundations-v1`](curriculum/datasets/rust-foundations-v1). The broader curated seed spans 25 tracks and all three curriculum stages in [`curriculum/datasets/cenere-multistack-v1`](curriculum/datasets/cenere-multistack-v1): 75 train, 25 validation, and 25 held-out rubric cases. [`cenere-multistack-v2`](curriculum/datasets/cenere-multistack-v2) adds eight source-linked code answers from locally checked C, C++, PHP, JavaScript, Node, Python, Rust, and Go examples. Build the examples and run the base-model benchmark with:
 
 ```sh
 python3 curriculum/datasets/build_multistack_v1.py --check
@@ -105,7 +105,21 @@ training/.venv/bin/python training/evaluate.py \
   --output training/data/cenere-multistack-v1/base-predictions.jsonl
 ```
 
-The rubric checks requested terms and forbidden claims. It is a screening signal, not a semantic correctness proof; compile or test code answers in their own stacks.
+The rubric checks requested terms and forbidden claims. It is a screening signal, not a semantic correctness proof; compile or test code answers in their own stacks. For the v2 code-focused run:
+
+```sh
+python3 curriculum/datasets/build_multistack_v2.py --check
+training/.venv/bin/python training/train.py \
+  --model training/models/Qwen2.5-Coder-3B-Instruct-4bit \
+  --data curriculum/datasets/cenere-multistack-v2 \
+  --output training/adapters/cenere-multistack-v2 \
+  --iters 10 --batch-size 1 --num-layers 1 --max-seq-length 512 --val-batches 2
+training/.venv/bin/python training/evaluate.py \
+  --cases curriculum/datasets/cenere-multistack-v2/eval.jsonl \
+  --output /tmp/cenere-multistack-v2-base.jsonl
+```
+
+Run the same evaluation with `--endpoint http://127.0.0.1:8081/v1/chat/completions` against a local candidate server that loads the adapter. See the v2 dataset README for its scope and limitations.
 
 For the Rust reference program and its held-out rubric, run:
 
