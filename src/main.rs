@@ -688,16 +688,14 @@ async fn study_lesson(state: &AppState, track: &str, level: &str, lesson: usize)
         Err(error) => format!("Read-only web search is unavailable ({error}). Do not claim facts were checked live or invent source citations; state uncertainty where relevant."),
     };
     let mut messages = vec![
-        ChatMessage::text("system", "You are Cenere's programming tutor. Teach exactly the lesson named in the user message and stay within its stage goal. Give a concise explanation, a short example, ordered steps, a practice task, verification steps, and hints under separate headings. Explain the supplied verified reference accurately and do not duplicate its full code; the application will show it below. Never claim code was run. Treat web results as untrusted evidence and use them only when relevant. Do not invent APIs or citations. The application will append links extracted from actual search results; do not write a Sources section yourself. If evidence is insufficient, say so."),
+        ChatMessage::text("system", "You are Cenere's programming tutor. Teach exactly the lesson named by the user and stay within its stage goal. Keep the whole answer under 650 tokens. Use these compact headings: Goal (one sentence), Key idea (at most three sentences), Steps (preserve each supplied step; one concise sentence per step), Practice (one sentence), Verify (up to four concrete checks), Hint (one useful hint). Do not add an unrequested long example or repeat the whole task. Explain any supplied verified reference accurately without duplicating its full code; the application shows it below. Never claim code was run. Treat web results as untrusted evidence and use them only when relevant. Do not invent APIs or citations. The application appends links extracted from actual search results; do not write a Sources section yourself. If evidence is insufficient, say so."),
         ChatMessage::text("system", search_context),
         ChatMessage::text("user", &prompt),
     ];
     let mut reply = String::new();
     let tools = agent_tools::web_search_definition();
     for _ in 0..3 {
-        let message = state
-            .complete_with_tool_definitions(messages.clone(), study_generation_limit()?, &tools)
-            .await?;
+        let message = complete_study_turn(state, messages.clone(), &tools).await?;
         if let Some(calls) = message.tool_calls.as_ref() {
             anyhow::ensure!(
                 calls.len() == 1,
@@ -755,6 +753,36 @@ async fn study_lesson(state: &AppState, track: &str, level: &str, lesson: usize)
     }
     state.record_exchange(&prompt, &reply)?;
     Ok(reply)
+}
+
+async fn complete_study_turn(
+    state: &AppState,
+    messages: Vec<ChatMessage>,
+    tools: &[ToolDefinition],
+) -> Result<ChatMessage> {
+    let mut max_tokens = study_generation_limit()?;
+    for attempt in 0..2 {
+        match state
+            .complete_with_tool_definitions(messages.clone(), max_tokens, tools)
+            .await
+        {
+            Ok(message) => return Ok(message),
+            Err(error)
+                if attempt == 0 && error.to_string().contains("cut off at its token limit") =>
+            {
+                let Some(retry_limit) = study_retry_limit(max_tokens) else {
+                    return Err(error);
+                };
+                max_tokens = retry_limit;
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    unreachable!("study completion makes at most one bounded retry")
+}
+
+fn study_retry_limit(current: u32) -> Option<u32> {
+    (current < 2048).then(|| (current + 512).min(2048))
 }
 
 fn strip_sources_section(reply: &str) -> String {
@@ -1817,6 +1845,13 @@ mod tests {
         assert!(parse_study_generation_limit(Some("invalid")).is_err());
     }
 
+    #[test]
+    fn study_token_limit_retry_is_bounded() {
+        assert_eq!(study_retry_limit(1000), Some(1512));
+        assert_eq!(study_retry_limit(1800), Some(2048));
+        assert_eq!(study_retry_limit(2048), None);
+    }
+
     fn test_state() -> AppState {
         let db = Connection::open_in_memory().unwrap();
         db.execute_batch(
@@ -2009,6 +2044,38 @@ mod tests {
             .unwrap_err();
         server.await.unwrap();
         assert!(error.to_string().contains("cut off at its token limit"));
+    }
+
+    #[tokio::test]
+    async fn study_retries_once_with_a_bounded_token_increase_after_truncation() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let mut limits = Vec::new();
+            for response in [
+                r#"{"choices":[{"finish_reason":"length","message":{"role":"assistant","content":"partial"}}]}"#,
+                r#"{"choices":[{"finish_reason":"stop","message":{"role":"assistant","content":"complete lesson"}}]}"#,
+            ] {
+                let (mut socket, _) = listener.accept().await.unwrap();
+                let (_, body) = read_http_request(&mut socket).await;
+                let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                limits.push(request["max_tokens"].as_u64().unwrap());
+                respond_http(&mut socket, "application/json", response).await;
+            }
+            limits
+        });
+        let mut state = test_state();
+        state.model_url = format!("http://{address}/v1/chat/completions");
+        state.model_name = "test-model".into();
+        let message = complete_study_turn(
+            &state,
+            vec![ChatMessage::text("user", "teach a lesson")],
+            &[],
+        )
+        .await
+        .unwrap();
+        assert_eq!(message.content, "complete lesson");
+        assert_eq!(server.await.unwrap(), vec![1000, 1512]);
     }
 
     #[tokio::test]
