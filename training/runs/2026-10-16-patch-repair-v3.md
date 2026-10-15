@@ -16,4 +16,6 @@ The evaluator now mirrors Cenere's whitespace-tolerant patch check, so a formatt
 
 Ran the base model through `cenere code` against a disposable Go fixture without `--apply`. The generated patch passed the whitespace-tolerant applicability check but returned 10 for inputs below 1, which violates the hidden test. The reviewer role incorrectly described that patch as correct. No project files were modified. This confirms that successful patch application and model self-review are not substitutes for running behavior tests; future agent work should add permissioned test execution and send real test failures back to the coder.
 
+After bounding planner and reviewer generations, a repeat live run completed without truncating the plan. The 3B model still generated incorrect lower-bound behavior; the reviewer flagged the upper-bound issue but did not identify that values below 1 would also return 10. No patch was applied. The limits reduced role verbosity, but did not make model review reliable.
+
 Do not promote `training/adapters/problem-solving-v5`. Keep the base model as the default. These two tasks now count as development evidence rather than a pristine future benchmark. Add broader independently reviewed cases and improve patch generation/tool feedback before treating fine-tuning as an improvement.
