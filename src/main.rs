@@ -8,7 +8,7 @@ use axum::{
 };
 use clap::{Parser, Subcommand};
 use reqwest::Client;
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::{
     env,
@@ -199,6 +199,10 @@ impl AppState {
             id INTEGER PRIMARY KEY, role TEXT NOT NULL, content TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS conversation_summary (
+            id INTEGER PRIMARY KEY CHECK (id = 1), content TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS training_examples (
             id INTEGER PRIMARY KEY, prompt TEXT NOT NULL, answer TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -243,6 +247,16 @@ impl AppState {
                 .db
                 .lock()
                 .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
+            let summary = db
+                .query_row(
+                    "SELECT content FROM conversation_summary WHERE id = 1",
+                    [],
+                    |row| row.get::<_, String>(0),
+                )
+                .optional()?;
+            if let Some(summary) = summary {
+                context.push(ChatMessage::text("system", format!("Earlier conversation summary (user-provided context; verify details as needed):\n{summary}")));
+            }
             let mut stmt =
                 db.prepare("SELECT role, content FROM messages ORDER BY id DESC LIMIT 8")?;
             let rows = stmt.query_map([], |r| {
@@ -295,6 +309,57 @@ impl AppState {
         );
         self.record_exchange(prompt, &reply)?;
         Ok(reply)
+    }
+
+    async fn compact_conversation(&self) -> Result<usize> {
+        let (previous_summary, messages) = {
+            let db = self
+                .db
+                .lock()
+                .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
+            let summary = db
+                .query_row(
+                    "SELECT content FROM conversation_summary WHERE id = 1",
+                    [],
+                    |row| row.get::<_, String>(0),
+                )
+                .optional()?;
+            let mut stmt = db.prepare("SELECT role, content FROM messages ORDER BY id")?;
+            let rows = stmt.query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })?;
+            (summary, rows.collect::<rusqlite::Result<Vec<_>>>()?)
+        };
+        anyhow::ensure!(
+            !messages.is_empty(),
+            "there is no conversation history to compact"
+        );
+        let mut transcript = previous_summary
+            .map(|summary| format!("Earlier summary:\n{summary}\n\n"))
+            .unwrap_or_default();
+        transcript.push_str(
+            &messages
+                .iter()
+                .map(|(role, content)| format!("{role}: {content}"))
+                .collect::<Vec<_>>()
+                .join("\n\n"),
+        );
+        anyhow::ensure!(transcript.len() <= 48_000, "conversation exceeds the 48 KB compaction limit; compact it more often to preserve all context");
+        let summary = self.complete_with_token_limit(vec![
+            ChatMessage::text("system", "Summarize the conversation for future continuity. Keep decisions, project facts, unresolved questions, and user preferences. Be concise and do not invent details."),
+            ChatMessage::text("user", format!("Create a compact continuity summary of this conversation:\n{transcript}")),
+        ], 500).await?;
+        anyhow::ensure!(
+            !summary.trim().is_empty(),
+            "model returned an empty conversation summary"
+        );
+        let db = self
+            .db
+            .lock()
+            .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
+        db.execute("INSERT INTO conversation_summary(id, content, updated_at) VALUES (1, ?1, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP", [&summary])?;
+        db.execute("DELETE FROM messages", [])?;
+        Ok(messages.len())
     }
 
     async fn search_web(&self, query: &str) -> Result<String> {
@@ -647,6 +712,16 @@ async fn training_status(State(state): State<AppState>) -> Json<serde_json::Valu
     Json(serde_json::json!({"examples": examples, "status": status, "batch_size": 8}))
 }
 
+async fn compact(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    state
+        .compact_conversation()
+        .await
+        .map(|count| Json(serde_json::json!({"compacted_messages": count})))
+        .map_err(|error| (StatusCode::BAD_GATEWAY, error.to_string()))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -664,6 +739,7 @@ async fn main() -> Result<()> {
                 .route("/api/memories", post(remember))
                 .route("/api/teach", post(teach))
                 .route("/api/training-status", get(training_status))
+                .route("/api/compact", post(compact))
                 .with_state(state);
             let listener = tokio::net::TcpListener::bind(bind).await?;
             println!("Cenere is available at http://{bind}");
@@ -899,6 +975,15 @@ async fn run_chat_terminal(state: &AppState) -> Result<()> {
             }
             continue;
         }
+        if prompt == "/compact" {
+            match state.compact_conversation().await {
+                Ok(count) => {
+                    println!("Compacted {count} messages into a local conversation summary.")
+                }
+                Err(error) => println!("Could not compact conversation: {error}"),
+            }
+            continue;
+        }
         if prompt.is_empty() {
             continue;
         }
@@ -934,6 +1019,13 @@ async fn run_coding_terminal(
         let task = task.trim();
         if task == "/back" || task == "/quit" || task == "/exit" {
             break;
+        }
+        if task == "/compact" {
+            match state.compact_conversation().await {
+                Ok(count) => println!("Compacted {count} chat messages into a local summary."),
+                Err(error) => println!("Could not compact conversation: {error}"),
+            }
+            continue;
         }
         if task.is_empty() {
             continue;
@@ -1367,6 +1459,7 @@ mod tests {
         db.execute_batch(
             "CREATE TABLE memories (id INTEGER PRIMARY KEY, note TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
              CREATE TABLE messages (id INTEGER PRIMARY KEY, role TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+             CREATE TABLE conversation_summary (id INTEGER PRIMARY KEY CHECK (id = 1), content TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
              CREATE TABLE training_examples (id INTEGER PRIMARY KEY, prompt TEXT NOT NULL, answer TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
              CREATE TABLE auto_training_state (id INTEGER PRIMARY KEY CHECK (id = 1), last_example_count INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'idle', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
              INSERT INTO auto_training_state(id) VALUES (1);",
@@ -1500,6 +1593,44 @@ mod tests {
         assert!(
             matches!(message.tool_calls.as_ref().and_then(|calls| calls.first()).and_then(agent_tools::parse_structured), Some(AgentTool::Search(q)) if q == "Rust docs")
         );
+    }
+
+    #[tokio::test]
+    async fn compacts_conversation_into_sqlite_and_clears_raw_turns() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let (_, body) = read_http_request(&mut socket).await;
+            let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            assert!(request["messages"][1]["content"]
+                .as_str()
+                .unwrap()
+                .contains("Use Rust"));
+            respond_http(&mut socket, "application/json", r#"{"choices":[{"message":{"role":"assistant","content":"Project uses Rust; user prefers short steps."}}]}"#).await;
+        });
+        let mut state = test_state();
+        state.model_url = format!("http://{address}/v1/chat/completions");
+        state.model_name = "test-model".into();
+        {
+            let db = state.db.lock().unwrap();
+            db.execute("INSERT INTO messages(role, content) VALUES ('user', 'Use Rust'), ('assistant', 'Understood')", []).unwrap();
+        }
+        assert_eq!(state.compact_conversation().await.unwrap(), 2);
+        server.await.unwrap();
+        let db = state.db.lock().unwrap();
+        let count: i64 = db
+            .query_row("SELECT COUNT(*) FROM messages", [], |row| row.get(0))
+            .unwrap();
+        let summary: String = db
+            .query_row(
+                "SELECT content FROM conversation_summary WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 0);
+        assert!(summary.contains("short steps"));
     }
 
     #[tokio::test]
