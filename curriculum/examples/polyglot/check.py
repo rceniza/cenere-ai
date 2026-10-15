@@ -34,7 +34,8 @@ def available(command: str) -> bool:
 
 
 def run(command: list[str], *, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, input=input_text, text=True, capture_output=True, timeout=30, check=False)
+    # Shared CI runners may need longer to compile C++ and Go from a cold cache.
+    return subprocess.run(command, input=input_text, text=True, capture_output=True, timeout=120, check=False)
 
 
 def main() -> int:
