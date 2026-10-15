@@ -46,3 +46,5 @@ mlx_lm.server --model models/Qwen2.5-Coder-3B-Instruct-4bit \
 ```
 
 The server exposes the OpenAI-compatible endpoint expected by Cenere. This loads the adapter when the process starts; it does not hot-swap weights into an already running server. Fusion remains an option when a standalone model artifact is useful, and those model files are excluded from Git. See [`../curriculum/datasets/cenere-multistack-v1`](../curriculum/datasets/cenere-multistack-v1) for the 25-track training/evaluation seed and the [2026-10-15 run report](../curriculum/datasets/cenere-multistack-v1/run-2026-10-15.md).
+
+For test-feedback behavior, [cenere-problem-solving-v6](../curriculum/datasets/cenere-problem-solving-v6/README.md) adds four reviewed examples where a failing test output accompanies the task. Compare adapters on the separate four-language [patch-repair-v4 action set](../curriculum/evaluations/patch-repair-v4/README.md). The 100-step one-layer run did not improve the base on that holdout and remains unpromoted ([report](runs/2026-10-16-problem-solving-v6.md)).

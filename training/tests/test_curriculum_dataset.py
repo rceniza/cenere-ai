@@ -49,6 +49,9 @@ SPEC_PROBLEM_V4.loader.exec_module(BUILDER_PROBLEM_V4)
 SPEC_PROBLEM_V5 = importlib.util.spec_from_file_location("problem_solving_v5", ROOT / "curriculum/datasets/build_problem_solving_v5.py")
 BUILDER_PROBLEM_V5 = importlib.util.module_from_spec(SPEC_PROBLEM_V5)
 SPEC_PROBLEM_V5.loader.exec_module(BUILDER_PROBLEM_V5)
+SPEC_PROBLEM_V6 = importlib.util.spec_from_file_location("problem_solving_v6", ROOT / "curriculum/datasets/build_problem_solving_v6.py")
+BUILDER_PROBLEM_V6 = importlib.util.module_from_spec(SPEC_PROBLEM_V6)
+SPEC_PROBLEM_V6.loader.exec_module(BUILDER_PROBLEM_V6)
 
 
 def read_jsonl(path):
@@ -66,6 +69,20 @@ def java_runtime_available():
 
 
 class MultistackDatasetTests(unittest.TestCase):
+    def test_problem_solving_v6_adds_test_feedback_without_changing_heldout_splits(self):
+        rendered = BUILDER_PROBLEM_V6.render()
+        data_path = ROOT / "curriculum/datasets/cenere-problem-solving-v6"
+        for filename, content in rendered.items():
+            self.assertEqual((data_path / filename).read_bytes(), content, filename)
+        train = read_jsonl(data_path / "train.jsonl")
+        valid = read_jsonl(data_path / "valid.jsonl")
+        evaluation = read_jsonl(data_path / "eval.jsonl")
+        self.assertEqual((len(train), len(valid), len(evaluation)), (196, 65, 93))
+        self.assertEqual([row["id"] for row in train[-4:]], [item["id"] for item in BUILDER_PROBLEM_V6.FEEDBACK])
+        self.assertTrue(all("Failing test output:" in row["messages"][0]["content"] for row in train[-4:]))
+        heldout_ids = {case["id"] for case in map(json.loads, (ROOT / "curriculum/evaluations/patch-repair-v4/cases.jsonl").read_text().splitlines())}
+        self.assertTrue(heldout_ids.isdisjoint({row["id"] for row in train}))
+
     def test_problem_solving_v5_is_reproducible_and_adds_verified_go_csharp_patches(self):
         rendered = BUILDER_PROBLEM_V5.render()
         data_path = ROOT / "curriculum/datasets/cenere-problem-solving-v5"

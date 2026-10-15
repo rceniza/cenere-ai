@@ -80,6 +80,9 @@ jobs:
       - name: Verify Go and C# problem-solving training data is reproducible
         run: python3 curriculum/datasets/build_problem_solving_v5.py --check
 
+      - name: Verify problem-solving test-feedback data is reproducible
+        run: python3 curriculum/datasets/build_problem_solving_v6.py --check
+
       - name: Compile and run polyglot exercise
         run: python3 curriculum/examples/polyglot/check.py --require rust,c,cpp,python,node,typescript,php,go,java,csharp
 

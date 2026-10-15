@@ -11,6 +11,7 @@ SPEC.loader.exec_module(PATCH_EVAL)
 CASES = [json.loads(line) for line in (ROOT / "curriculum/evaluations/patch-repair-v1/cases.jsonl").read_text().splitlines()]
 CASES_V2 = [json.loads(line) for line in (ROOT / "curriculum/evaluations/patch-repair-v2/cases.jsonl").read_text().splitlines()]
 CASES_V3 = [json.loads(line) for line in (ROOT / "curriculum/evaluations/patch-repair-v3/cases.jsonl").read_text().splitlines()]
+CASES_V4 = [json.loads(line) for line in (ROOT / "curriculum/evaluations/patch-repair-v4/cases.jsonl").read_text().splitlines()]
 
 
 class PatchEvaluationTests(unittest.TestCase):
@@ -177,6 +178,50 @@ func clampRetries(value int) int {
         ))
         answer = f"```diff\ndiff --git a/{path} b/{path}\n{body}```"
         self.assertEqual(PATCH_EVAL.check(case, answer), [])
+
+    def test_patch_repair_v4_reference_fixes_pass_fresh_hidden_checks(self):
+        fence = chr(96) * 3
+        for case in CASES_V4:
+            with self.subTest(case=case["id"]):
+                fixture = PATCH_EVAL.FIXTURE_ROOT / case["fixture"]
+                relative = case["context_files"][-1]
+                original = (fixture / "files" / relative).read_text()
+                fixed = (fixture / "solutions" / relative).read_text()
+                body = "".join(difflib.unified_diff(
+                    original.splitlines(keepends=True), fixed.splitlines(keepends=True),
+                    fromfile=f"a/{relative}", tofile=f"b/{relative}",
+                ))
+                answer = f"{fence}diff\ndiff --git a/{relative} b/{relative}\n{body}{fence}"
+                self.assertEqual(PATCH_EVAL.check(case, answer), [])
+
+    def test_problem_solving_v6_feedback_fixes_pass_their_fixtures(self):
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "problem_solving_v6",
+            ROOT / "curriculum/datasets/build_problem_solving_v6.py",
+        )
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        fence = chr(96) * 3
+        for item in builder.FEEDBACK:
+            with self.subTest(example=item["id"]):
+                fixture = ROOT / "curriculum/evaluations/patch-repair-v1/fixtures" / item["fixture"]
+                original = (fixture / "files" / item["file"]).read_text()
+                diff = builder.make_diff(item["file"], original, item["fixed"])
+                answer = f"{fence}diff\n{diff}{fence}"
+                case = {
+                    "fixture": f"patch-repair-v1/fixtures/{item['fixture']}",
+                    "context_files": ["go.mod", item["file"]] if item["id"] == "feedback-go-first-nonempty-after-test-failure" else [item["file"]],
+                    "check_destination": "." if item["id"] == "feedback-go-first-nonempty-after-test-failure" else "checks",
+                    "checks": {
+                        "feedback-python-clamp-after-test-failure": [["python3", "-m", "unittest", "discover", "-s", "checks", "-p", "test*.py"]],
+                        "feedback-javascript-retry-after-test-failure": [["node", "checks/hidden.js"]],
+                        "feedback-rust-checked-sum-after-test-failure": [["rustc", "--edition=2021", "--test", "checks/hidden.rs", "-o", "checks/hidden-tests"], ["checks/hidden-tests"]],
+                        "feedback-go-first-nonempty-after-test-failure": [["go", "test", "."]],
+                    }[item["id"]],
+                }
+                self.assertEqual(PATCH_EVAL.check(case, answer), [])
 
 
 if __name__ == "__main__":
