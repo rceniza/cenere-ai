@@ -26,6 +26,24 @@ class RubricTests(unittest.TestCase):
         self.assertEqual(missing, ["offset"])
         self.assertEqual(forbidden, ["commit before writing"])
 
+    def test_does_not_flag_a_forbidden_term_when_the_answer_rejects_it(self):
+        case = {"must_not_include": ["administrator", "upload environment"]}
+        missing, forbidden = EVALUATE.score(
+            case,
+            "Do not retry as administrator. Never upload environment secrets.",
+        )
+        self.assertEqual(missing, [])
+        self.assertEqual(forbidden, [])
+
+    def test_flags_an_unsafe_claim_even_if_an_earlier_sentence_has_a_negation(self):
+        case = {"must_not_include": ["administrator"]}
+        missing, forbidden = EVALUATE.score(
+            case,
+            "Do not use broad permissions. Use administrator credentials for the retry.",
+        )
+        self.assertEqual(missing, [])
+        self.assertEqual(forbidden, ["administrator"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -3,8 +3,23 @@
 
 import argparse
 import json
+import re
 import urllib.request
 from pathlib import Path
+
+
+def contains_unnegated(answer: str, phrase: str) -> bool:
+    """Find a forbidden phrase unless it is explicitly rejected immediately before it."""
+    lower, needle = answer.lower(), phrase.lower()
+    negations = {"no", "not", "never", "avoid", "avoids", "avoiding", "without", "don't", "doesn't", "shouldn't", "mustn't", "can't", "cannot"}
+    offset = 0
+    while (position := lower.find(needle, offset)) >= 0:
+        prefix = re.split(r"[.!?;\n]", lower[max(0, position - 96):position])[-1]
+        words = re.findall(r"\b[\w']+\b", prefix)[-7:]
+        if not any(word in negations for word in words):
+            return True
+        offset = position + len(needle)
+    return False
 
 
 def score(case: dict, answer: str) -> tuple[list[str], list[str]]:
@@ -13,7 +28,7 @@ def score(case: dict, answer: str) -> tuple[list[str], list[str]]:
     for group in case.get("must_include_any", []):
         if not any(term.lower() in lower for term in group):
             missing.append("one of: " + " | ".join(group))
-    forbidden = [term for term in case.get("must_not_include", []) if term.lower() in lower]
+    forbidden = [term for term in case.get("must_not_include", []) if contains_unnegated(lower, term)]
     return missing, forbidden
 
 

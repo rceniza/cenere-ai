@@ -1,4 +1,5 @@
 import importlib.util
+import argparse
 import json
 import tempfile
 import unittest
@@ -55,6 +56,23 @@ class DatasetValidationTests(unittest.TestCase):
     def test_missing_dataset_has_actionable_error(self):
         with self.assertRaisesRegex(SystemExit, "prepare reviewed chat examples"):
             TRAIN.validate_dataset(self.data)
+
+    def test_lora_command_masks_prompts_and_saves_validation_checkpoints(self):
+        args = argparse.Namespace(
+            model="local-model", data=Path("data"), output=Path("adapter"), iters=100,
+            batch_size=1, num_layers=1, max_seq_length=1024, val_batches=2,
+            steps_per_eval=25, steps_per_report=10, save_every=25,
+            learning_rate=1e-5, seed=42, mask_prompt=True, grad_checkpoint=True,
+        )
+        command = TRAIN.build_lora_command(args, Path("mlx_lm.lora"))
+        self.assertIn("--mask-prompt", command)
+        self.assertIn("--steps-per-eval", command)
+        self.assertIn("25", command)
+        self.assertIn("--save-every", command)
+        self.assertIn("--seed", command)
+        args.mask_prompt = False
+        command = TRAIN.build_lora_command(args, Path("mlx_lm.lora"))
+        self.assertNotIn("--mask-prompt", command)
 
     def test_evaluation_rubric_accepts_equivalent_valid_rust_and_rejects_wrong_types(self):
         case = {
