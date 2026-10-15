@@ -25,6 +25,8 @@ use std::{
 const WEB: &str = include_str!("../web/index.html");
 mod agent_tools;
 mod curriculum;
+mod mcp_server;
+mod skills;
 use agent_tools::{AgentTool, ToolCall, ToolDefinition};
 
 #[derive(Parser)]
@@ -83,6 +85,13 @@ enum Command {
     Remember { note: String },
     /// List saved project notes
     Memories,
+    /// List reusable local Skills
+    Skills {
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+    },
+    /// Run Cenere as a read-only MCP server over stdio
+    Mcp,
     /// Save a corrected prompt and ideal answer for a future fine-tune
     Teach { prompt: String, answer: String },
     /// Export reviewed examples to MLX chat JSONL
@@ -969,6 +978,17 @@ async fn main() -> Result<()> {
                 println!("- {memory}");
             }
         }
+        Command::Skills { repo } => {
+            let skills = skills::discover(&repo)?;
+            if skills.is_empty() {
+                println!("No Skills found. Add SKILL.md files under .cenere/skills/<name>/ or ~/.cenere/skills/<name>/.");
+            } else {
+                for skill in skills {
+                    println!("{} — {}", skill.name, skill.description);
+                }
+            }
+        }
+        Command::Mcp => mcp_server::serve(state).await?,
         Command::Teach { prompt, answer } => {
             state.teach(&prompt, &answer)?;
             println!("Saved reviewed example for future fine-tuning.");
@@ -1358,8 +1378,10 @@ async fn run_agent_team(
 ) -> Result<String> {
     let max_code_tokens = code_generation_limit()?;
     let memories = state.memories(task, 4)?.join("\n- ");
+    let skill_context = skills::matching_context(repo, task)?;
     let context = format!(
-        "Task: {task}\n\nRelevant saved notes:\n- {memories}\n\nSelected source files:\n{}",
+        "Task: {task}\n\nRelevant saved notes:\n- {memories}\n\nApplicable Skills:\n{}\n\nSelected source files:\n{}",
+        if skill_context.is_empty() { "[None]" } else { &skill_context },
         if files.trim().is_empty() {
             "[No source files selected; treat this as a new project.]"
         } else {

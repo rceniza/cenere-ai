@@ -79,6 +79,14 @@ Open the web UI and expand **Step-by-step learning tracks**; each task has a **S
 
 ## Memory and fine-tuning examples
 
+### Skills and tool integrations
+
+Cenere loads instruction-only Skills from `.cenere/skills/<skill-name>/SKILL.md` in the workspace and `~/.cenere/skills/<skill-name>/SKILL.md` for the user. A Skill may start with YAML-style `name` and `description` fields, followed by Markdown instructions. `cenere-ai skills --repo .` lists discovered Skills; coding sessions add up to four Skills whose name or description matches the task. Each file is limited to 12 KB and the total injected context to 24 KB. Skills are context instructions: Cenere does not execute scripts from them.
+
+Run `cenere-ai mcp` to expose read-only `search_project_memory` and `list_skills` tools over MCP stdio. Add it to an MCP-compatible host using the executable path and `mcp` argument. This first MCP integration serves Cenere's local context to other MCP clients; connecting external MCP servers into Cenere's own model tool loop is still to come. Built-in coding tools remain shell, web search, and page inspection behind the selected permission mode. SQLite FTS5 supplies local retrieval for saved notes.
+
+Coding currently uses planner, coder, and reviewer roles sequentially through one local model. Those are role passes, not separately delegated or parallel agents; independent agents are a future capability.
+
 ```sh
 cargo run -- remember "This project uses Axum and SQLite."
 cargo run -- memories
