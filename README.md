@@ -129,3 +129,5 @@ While coding, save durable project facts with `cenere remember`. Save an answer 
 ## Continuous integration
 
 GitHub Actions checks Rust formatting, runs the Rust and Python training-data tests, and builds the production Docker image on pushes to `main`, pull requests, and manual dispatch.
+
+See [`docs/architecture.md`](docs/architecture.md) for prompt/RAM boundaries, SQLite concurrency limits, and the current training footprint.
