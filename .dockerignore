@@ -1,0 +1,11 @@
+.git
+.gitignore
+target
+data
+training/.venv
+training/data
+training/adapters
+training/models
+browser/.venv
+browser/cache
+__pycache__

@@ -1,0 +1,1232 @@
+{
+  "version": 1,
+  "description": "A progressive, practice-first curriculum. Each stage moves from concepts to a small implementation and a checkable result. Use current official documentation for version-sensitive details.",
+  "tracks": [
+    {
+      "id": "foundations",
+      "title": "Programming foundations",
+      "summary": "Problem solving, data structures, algorithms, debugging, testing, and readable code.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Write small programs and explain their behavior.",
+          "lessons": [
+            {
+              "title": "Values, variables, and control flow",
+              "practice": "Build a command-line unit converter; test normal, boundary, and invalid input."
+            },
+            {
+              "title": "Functions and decomposition",
+              "practice": "Split a text statistics tool into small functions with clear inputs and outputs."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Choose data structures and validate behavior systematically.",
+          "lessons": [
+            {
+              "title": "Collections and complexity",
+              "practice": "Implement a word-frequency counter; compare list scans with a hash map."
+            },
+            {
+              "title": "Testing and debugging",
+              "practice": "Fix seeded defects using a failing test, then add regression tests."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Reason about performance, concurrency, and design tradeoffs.",
+          "lessons": [
+            {
+              "title": "Algorithms and profiling",
+              "practice": "Benchmark two solutions and explain time and memory costs."
+            },
+            {
+              "title": "Concurrency and architecture",
+              "practice": "Design a bounded worker queue and test cancellation and failure cases."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "title": "C",
+      "summary": "C syntax, pointers, memory ownership, compilation, and systems interfaces.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Compile and test small C programs.",
+          "lessons": [
+            {
+              "title": "Types, functions, and build",
+              "practice": "Create a line-oriented calculator with strict input checks."
+            },
+            {
+              "title": "Arrays and strings",
+              "practice": "Write a safe string length and copy routine with boundary tests."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Manage memory and split a program into modules.",
+          "lessons": [
+            {
+              "title": "Pointers and allocation",
+              "practice": "Build a resizable vector; test allocation failures and cleanup."
+            },
+            {
+              "title": "Headers and compiler warnings",
+              "practice": "Split a utility into .h/.c files and compile with strict warnings."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Apply systems programming techniques safely.",
+          "lessons": [
+            {
+              "title": "Processes and sockets",
+              "practice": "Build a small TCP echo server and handle disconnects."
+            },
+            {
+              "title": "Sanitizers and performance",
+              "practice": "Find and fix memory errors with address/undefined sanitizers."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cpp",
+      "title": "C++",
+      "summary": "Modern C++, RAII, templates, standard library, and performance-aware design.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Write and compile small modern C++ programs.",
+          "lessons": [
+            {
+              "title": "Types, functions, and containers",
+              "practice": "Build a score tracker using vector and map."
+            },
+            {
+              "title": "Classes and basic tests",
+              "practice": "Model a bank account with invariants and unit tests."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Use ownership and generic abstractions safely.",
+          "lessons": [
+            {
+              "title": "RAII and smart pointers",
+              "practice": "Wrap a resource with deterministic cleanup; remove raw owning pointers."
+            },
+            {
+              "title": "Templates and algorithms",
+              "practice": "Use standard algorithms and implement a constrained generic helper."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Build reliable, efficient concurrent components.",
+          "lessons": [
+            {
+              "title": "Concurrency and atomics",
+              "practice": "Implement a thread-safe bounded queue and stress test it."
+            },
+            {
+              "title": "Profiling and ABI boundaries",
+              "practice": "Profile a hot path and document a stable C-facing API."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp",
+      "title": "C# and .NET",
+      "summary": "C# language, .NET applications, async code, testing, and service development.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Build a small .NET console application.",
+          "lessons": [
+            {
+              "title": "Types, methods, and collections",
+              "practice": "Create a validated expense tracker with save/load tests."
+            },
+            {
+              "title": "Classes and nullable values",
+              "practice": "Model a library catalog with nullable reference checks."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Build testable asynchronous applications.",
+          "lessons": [
+            {
+              "title": "LINQ and async/await",
+              "practice": "Fetch multiple simulated records concurrently with cancellation."
+            },
+            {
+              "title": "Dependency injection and tests",
+              "practice": "Separate a service from storage and test it with a fake."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Build and operate robust .NET APIs.",
+          "lessons": [
+            {
+              "title": "ASP.NET Core API",
+              "practice": "Create a versioned API with validation, auth, and integration tests."
+            },
+            {
+              "title": "Diagnostics and performance",
+              "practice": "Add structured logs and traces, then profile an endpoint."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "php",
+      "title": "PHP",
+      "summary": "PHP language, Composer, web requests, persistence, and production practices.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Write PHP scripts with explicit input handling.",
+          "lessons": [
+            {
+              "title": "Values, arrays, and functions",
+              "practice": "Build a CSV summarizer and test malformed rows."
+            },
+            {
+              "title": "Composer and namespaces",
+              "practice": "Package a small reusable validation library."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Build secure, testable web features.",
+          "lessons": [
+            {
+              "title": "HTTP and forms",
+              "practice": "Implement a form endpoint with validation and CSRF protection."
+            },
+            {
+              "title": "PDO and database transactions",
+              "practice": "Build CRUD with prepared statements and rollback tests."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Operate maintainable PHP services.",
+          "lessons": [
+            {
+              "title": "Framework architecture",
+              "practice": "Implement a Laravel or Symfony module with feature tests."
+            },
+            {
+              "title": "Workers and operations",
+              "practice": "Add a retry-safe background job and monitor failures."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "javascript-typescript",
+      "title": "JavaScript and TypeScript",
+      "summary": "Language fundamentals, browser APIs, typed applications, testing, and tooling.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Write small interactive programs.",
+          "lessons": [
+            {
+              "title": "Values, functions, and modules",
+              "practice": "Build a validated interactive quiz with separated modules."
+            },
+            {
+              "title": "DOM and events",
+              "practice": "Create an accessible form with inline error handling."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Use asynchronous code and types to model real data.",
+          "lessons": [
+            {
+              "title": "Promises and fetch",
+              "practice": "Fetch paginated data with loading, error, and retry states."
+            },
+            {
+              "title": "TypeScript modeling",
+              "practice": "Represent API success/error states with discriminated unions."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Ship robust browser applications.",
+          "lessons": [
+            {
+              "title": "Testing and bundling",
+              "practice": "Add unit and browser tests and inspect a production bundle."
+            },
+            {
+              "title": "Performance and security",
+              "practice": "Measure rendering and prevent unsafe HTML injection."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nodejs",
+      "title": "Node.js backend",
+      "summary": "Node runtime, HTTP services, async workflows, persistence, and operations.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Build a small HTTP service.",
+          "lessons": [
+            {
+              "title": "Runtime and npm",
+              "practice": "Build a CLI that validates arguments and exits with useful codes."
+            },
+            {
+              "title": "HTTP routes",
+              "practice": "Create a JSON API with correct status codes and input validation."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Connect services and persistent storage.",
+          "lessons": [
+            {
+              "title": "Async error handling",
+              "practice": "Handle timeouts and rejected requests without unhandled promises."
+            },
+            {
+              "title": "Database and migrations",
+              "practice": "Add a migration and transactional repository with tests."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Build production-ready services.",
+          "lessons": [
+            {
+              "title": "Queues and idempotency",
+              "practice": "Process retryable jobs without duplicate side effects."
+            },
+            {
+              "title": "Observability and load",
+              "practice": "Add health checks, metrics, and a load-test baseline."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "react",
+      "title": "React",
+      "summary": "React components, state, accessibility, testing, and production performance.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Compose reusable user interfaces.",
+          "lessons": [
+            {
+              "title": "Components and props",
+              "practice": "Build a searchable list with empty and loading states."
+            },
+            {
+              "title": "State and events",
+              "practice": "Create a form that validates input and reports errors accessibly."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Structure data-driven applications.",
+          "lessons": [
+            {
+              "title": "Effects and server data",
+              "practice": "Load paginated data with cancellation and retry handling."
+            },
+            {
+              "title": "Routing and component tests",
+              "practice": "Add nested routes and tests for user-visible behavior."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Optimize and ship resilient React applications.",
+          "lessons": [
+            {
+              "title": "Rendering and performance",
+              "practice": "Profile an expensive view and reduce unnecessary work."
+            },
+            {
+              "title": "Server rendering and security",
+              "practice": "Audit hydration, escaping, and client/server data boundaries."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "web-platform",
+      "title": "HTML, CSS, accessibility, and browser",
+      "summary": "Semantic markup, responsive layout, inclusive interaction, and browser testing.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Create accessible static pages.",
+          "lessons": [
+            {
+              "title": "Semantic HTML",
+              "practice": "Build a page with landmarks, headings, and keyboard navigation."
+            },
+            {
+              "title": "CSS layout",
+              "practice": "Create a responsive card layout without fixed page widths."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Build interactive responsive interfaces.",
+          "lessons": [
+            {
+              "title": "Forms and accessibility",
+              "practice": "Add labels, focus management, and clear validation messages."
+            },
+            {
+              "title": "Browser automation",
+              "practice": "Test keyboard and mobile viewport flows in a browser."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Deliver fast and reliable web experiences.",
+          "lessons": [
+            {
+              "title": "Core web performance",
+              "practice": "Measure loading and interaction, then optimize the bottleneck."
+            },
+            {
+              "title": "Content security",
+              "practice": "Configure a restrictive CSP and test safe rendering."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "title": "Python",
+      "summary": "Python programming, packaging, testing, async services, and data workflows.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Write reliable scripts.",
+          "lessons": [
+            {
+              "title": "Values, collections, and functions",
+              "practice": "Create a JSON report generator with input validation."
+            },
+            {
+              "title": "Exceptions and tests",
+              "practice": "Add tests for normal, boundary, and malformed input."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Structure reusable and asynchronous programs.",
+          "lessons": [
+            {
+              "title": "Modules and packaging",
+              "practice": "Package a CLI with typed options and installable entry point."
+            },
+            {
+              "title": "Async and HTTP",
+              "practice": "Fetch several endpoints with timeout and cancellation handling."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Build dependable services and data pipelines.",
+          "lessons": [
+            {
+              "title": "FastAPI and persistence",
+              "practice": "Build a validated API with migrations and integration tests."
+            },
+            {
+              "title": "Profiling and concurrency",
+              "practice": "Profile a workload and choose processes, threads, or async with evidence."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rust",
+      "title": "Rust",
+      "summary": "Ownership, error handling, async services, testing, and safe systems programming.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Understand ownership and build CLI tools.",
+          "lessons": [
+            {
+              "title": "Types, functions, and cargo",
+              "practice": "Build a CLI that reads a text file of signed integers, parses each line with line.parse::<i64>(), reports invalid lines with line numbers, and uses only the Rust standard library. Do not use a regex, external crate, nonexistent i64::parse API, or unused imports.",
+              "reference": "examples/rust/parse_integers.rs"
+            },
+            {
+              "title": "Ownership and borrowing",
+              "practice": "Refactor needless clones and explain each borrow lifetime."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Model errors and build modular applications.",
+          "lessons": [
+            {
+              "title": "Enums, traits, and errors",
+              "practice": "Represent parser states with enums and return contextual errors."
+            },
+            {
+              "title": "Modules and tests",
+              "practice": "Split a library and binary; test edge cases and public behavior."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Build efficient concurrent services.",
+          "lessons": [
+            {
+              "title": "Async Rust",
+              "practice": "Build a bounded concurrent HTTP client with timeouts."
+            },
+            {
+              "title": "Profiling and unsafe review",
+              "practice": "Benchmark a hot path and document any unsafe invariant."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "go-java",
+      "title": "Go and Java",
+      "summary": "Two widely used service languages: learn idioms, concurrency, and runtime operations.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Build a small typed application in either language.",
+          "lessons": [
+            {
+              "title": "Types and collections",
+              "practice": "Implement a validated command-line inventory tool."
+            },
+            {
+              "title": "Packages and build tools",
+              "practice": "Split code into packages/modules and add automated tests."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Build concurrent HTTP services.",
+          "lessons": [
+            {
+              "title": "Errors and HTTP",
+              "practice": "Create an API with validation, timeouts, and structured errors."
+            },
+            {
+              "title": "Concurrency",
+              "practice": "Use goroutines/channels or executors/futures for bounded work."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Operate services with predictable resource use.",
+          "lessons": [
+            {
+              "title": "Profiling and memory",
+              "practice": "Profile allocation and latency under a repeatable workload."
+            },
+            {
+              "title": "Resilience",
+              "practice": "Implement graceful shutdown, retries, and health probes."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backend-api",
+      "title": "Backend and API design",
+      "summary": "HTTP, REST, authentication, validation, API contracts, and resilient service boundaries.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Understand requests, responses, and API contracts.",
+          "lessons": [
+            {
+              "title": "HTTP methods and status codes",
+              "practice": "Specify and implement CRUD with correct status semantics."
+            },
+            {
+              "title": "JSON validation",
+              "practice": "Reject invalid fields and return consistent error objects."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Secure and persist API workflows.",
+          "lessons": [
+            {
+              "title": "Authentication and authorization",
+              "practice": "Enforce ownership checks and test unauthorized access."
+            },
+            {
+              "title": "Transactions and migrations",
+              "practice": "Implement a multi-step update atomically."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Design APIs that survive change and failure.",
+          "lessons": [
+            {
+              "title": "Versioning and idempotency",
+              "practice": "Design a safe retried payment-like endpoint using idempotency keys."
+            },
+            {
+              "title": "Rate limits and resilience",
+              "practice": "Add bounded retries, timeouts, and per-client throttling."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sql-data",
+      "title": "SQL and data stores",
+      "summary": "Relational modeling, queries, transactions, indexes, migrations, and backup practice.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Read and write relational data.",
+          "lessons": [
+            {
+              "title": "Tables and constraints",
+              "practice": "Model customers and orders with foreign keys and uniqueness."
+            },
+            {
+              "title": "SELECT and joins",
+              "practice": "Answer reporting questions with joins and aggregates."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Keep multi-step changes correct and queries efficient.",
+          "lessons": [
+            {
+              "title": "Transactions and migrations",
+              "practice": "Apply a schema change with rollback and data checks."
+            },
+            {
+              "title": "Indexes and query plans",
+              "practice": "Use EXPLAIN to improve a slow query and compare results."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Plan for scale and recovery.",
+          "lessons": [
+            {
+              "title": "Isolation and contention",
+              "practice": "Reproduce a race and select an isolation strategy."
+            },
+            {
+              "title": "Backup and restore",
+              "practice": "Restore a backup into a clean database and verify consistency."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "git-linux-shell",
+      "title": "Git, Linux, and shell",
+      "summary": "Daily command-line fluency, version control, processes, files, and networking basics.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Navigate projects and track changes safely.",
+          "lessons": [
+            {
+              "title": "Files, processes, and pipes",
+              "practice": "Find and summarize log errors using standard shell tools."
+            },
+            {
+              "title": "Git basics",
+              "practice": "Create a branch, commit a focused change, and inspect the diff."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Automate repeatable development tasks.",
+          "lessons": [
+            {
+              "title": "Shell scripts and exit codes",
+              "practice": "Write a script that stops on errors and cleans temporary files."
+            },
+            {
+              "title": "Merge and recovery",
+              "practice": "Resolve a conflict and recover a staged-file mistake."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Diagnose process and network failures.",
+          "lessons": [
+            {
+              "title": "Signals and sockets",
+              "practice": "Trace a local port conflict and terminate only the intended process."
+            },
+            {
+              "title": "Secure automation",
+              "practice": "Review quoting, secrets, permissions, and untrusted input in a script."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "title": "Docker and containers",
+      "summary": "Images, containers, networks, volumes, Compose, and deployable app packaging.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Run and inspect containers.",
+          "lessons": [
+            {
+              "title": "Images and containers",
+              "practice": "Containerize a tiny app and inspect its logs and exit status."
+            },
+            {
+              "title": "Ports and environment",
+              "practice": "Pass configuration without baking secrets into an image."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Run a multi-service local stack.",
+          "lessons": [
+            {
+              "title": "Compose and volumes",
+              "practice": "Run an API and database with persistent storage and health checks."
+            },
+            {
+              "title": "Build optimization",
+              "practice": "Use a multi-stage build and compare image contents."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Harden images for deployment.",
+          "lessons": [
+            {
+              "title": "Non-root and supply chain",
+              "practice": "Run as non-root and scan pinned dependencies and image layers."
+            },
+            {
+              "title": "Debug and release",
+              "practice": "Diagnose a failing container and promote an immutable image tag."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cicd",
+      "title": "CI/CD",
+      "summary": "Automated checks, build artifacts, release promotion, and deployment safety.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Run checks automatically on changes.",
+          "lessons": [
+            {
+              "title": "Workflow triggers and jobs",
+              "practice": "Run formatter, tests, and build on every pull request."
+            },
+            {
+              "title": "Artifacts and caching",
+              "practice": "Publish a build artifact and verify cache keys."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Automate safe releases.",
+          "lessons": [
+            {
+              "title": "Secrets and environments",
+              "practice": "Deploy to a test environment using scoped credentials."
+            },
+            {
+              "title": "Release gates",
+              "practice": "Require checks and approval before production promotion."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Make delivery auditable and recoverable.",
+          "lessons": [
+            {
+              "title": "Supply chain provenance",
+              "practice": "Pin actions and produce a signed build artifact."
+            },
+            {
+              "title": "Rollback strategy",
+              "practice": "Practice a failed deployment rollback and verify service health."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kubernetes",
+      "title": "Kubernetes",
+      "summary": "Workloads, services, configuration, probes, rollout safety, and cluster operations.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Deploy and inspect an application in a local cluster.",
+          "lessons": [
+            {
+              "title": "Pods and Deployments",
+              "practice": "Deploy a stateless sample and inspect events and logs."
+            },
+            {
+              "title": "Services and ports",
+              "practice": "Expose it inside the cluster and verify DNS/service routing."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Configure and update workloads safely.",
+          "lessons": [
+            {
+              "title": "Config, secrets, and probes",
+              "practice": "Add readiness/liveness probes and verify a bad config is caught."
+            },
+            {
+              "title": "Rollouts and resources",
+              "practice": "Set resource requests/limits and roll out a new version."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Operate resilient clusters and workloads.",
+          "lessons": [
+            {
+              "title": "Autoscaling and disruption",
+              "practice": "Test scaling signals and a disruption budget under load."
+            },
+            {
+              "title": "RBAC and incident diagnosis",
+              "practice": "Apply least-privilege access and diagnose a failed rollout."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kafka-redpanda",
+      "title": "Kafka and Redpanda",
+      "summary": "Event streaming, partitions, consumer groups, delivery guarantees, and operations.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Produce and consume events locally.",
+          "lessons": [
+            {
+              "title": "Topics and records",
+              "practice": "Send validated JSON events and inspect partition ordering."
+            },
+            {
+              "title": "Consumer groups",
+              "practice": "Run two consumers and observe partition assignment."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Handle retries and schema evolution.",
+          "lessons": [
+            {
+              "title": "Offsets and delivery",
+              "practice": "Recover after a consumer failure without losing committed work."
+            },
+            {
+              "title": "Schemas and compatibility",
+              "practice": "Evolve an event schema while an old consumer remains active."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Design reliable streaming pipelines.",
+          "lessons": [
+            {
+              "title": "Transactions and idempotency",
+              "practice": "Prevent duplicate downstream writes during replay."
+            },
+            {
+              "title": "Capacity and observability",
+              "practice": "Measure lag and throughput, then plan partitions and retention."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "caching",
+      "title": "Caching and Redis",
+      "summary": "Cache keys, invalidation, consistency, TTLs, and performance measurement.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Understand when a cache helps.",
+          "lessons": [
+            {
+              "title": "Cache-aside basics",
+              "practice": "Cache a read endpoint with a short TTL and compare latency."
+            },
+            {
+              "title": "Keys and expiration",
+              "practice": "Design namespaced keys and verify expired values reload."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Prevent stale or overloaded behavior.",
+          "lessons": [
+            {
+              "title": "Invalidation and stampedes",
+              "practice": "Invalidate on writes and coalesce concurrent cache misses."
+            },
+            {
+              "title": "HTTP and browser caches",
+              "practice": "Set validators and cache headers for static resources."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Operate caches under failure and load.",
+          "lessons": [
+            {
+              "title": "Consistency and failure modes",
+              "practice": "Test behavior when cache is unavailable or stale."
+            },
+            {
+              "title": "Capacity and eviction",
+              "practice": "Measure hit rate and memory; choose an eviction policy with evidence."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "observability-sre",
+      "title": "Observability and reliability",
+      "summary": "Logs, metrics, traces, SLOs, incident response, and service health.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Make application behavior visible.",
+          "lessons": [
+            {
+              "title": "Structured logs",
+              "practice": "Add request IDs and useful error context without secrets."
+            },
+            {
+              "title": "Health checks",
+              "practice": "Distinguish process liveness from dependency readiness."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Measure user-facing service quality.",
+          "lessons": [
+            {
+              "title": "Metrics and traces",
+              "practice": "Instrument latency and trace a request across two services."
+            },
+            {
+              "title": "SLOs and alerts",
+              "practice": "Define an availability objective and alert on error budget burn."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Respond to production incidents and learn from them.",
+          "lessons": [
+            {
+              "title": "Incident diagnosis",
+              "practice": "Use logs, traces, and metrics to identify a seeded outage cause."
+            },
+            {
+              "title": "Capacity and postmortem",
+              "practice": "Estimate headroom and write a blameless corrective action plan."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Application and infrastructure security",
+      "summary": "Threat modeling, input handling, identity, secrets, dependencies, and least privilege.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Recognize common unsafe patterns.",
+          "lessons": [
+            {
+              "title": "Input validation and output encoding",
+              "practice": "Fix an injection flaw in an isolated training app."
+            },
+            {
+              "title": "Secrets and permissions",
+              "practice": "Remove a hard-coded secret and restrict file access."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Secure application boundaries.",
+          "lessons": [
+            {
+              "title": "Authentication and authorization",
+              "practice": "Test object-level access controls with multiple users."
+            },
+            {
+              "title": "Dependency and container review",
+              "practice": "Pin dependencies and run a vulnerability scan."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Assess system threats and recovery.",
+          "lessons": [
+            {
+              "title": "Threat modeling",
+              "practice": "Map assets, trust boundaries, abuse cases, and mitigations."
+            },
+            {
+              "title": "Incident and recovery",
+              "practice": "Rotate a compromised test credential and verify audit evidence."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cloud-production",
+      "title": "Cloud and production delivery",
+      "summary": "Deployment architecture, configuration, networking, scaling, cost, and recovery.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Understand a deployable service boundary.",
+          "lessons": [
+            {
+              "title": "Configuration and environments",
+              "practice": "Separate dev and production configuration with safe defaults."
+            },
+            {
+              "title": "DNS, TLS, and ingress",
+              "practice": "Trace a request from DNS to an application endpoint."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Deploy a service with recovery paths.",
+          "lessons": [
+            {
+              "title": "Rolling deploys and rollback",
+              "practice": "Deploy a version and roll back after a health check fails."
+            },
+            {
+              "title": "Storage and backups",
+              "practice": "Restore a test dataset and verify application behavior."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Balance reliability, security, and cost.",
+          "lessons": [
+            {
+              "title": "Scaling and capacity",
+              "practice": "Load test a service and explain its limiting resource."
+            },
+            {
+              "title": "Disaster recovery and cost",
+              "practice": "Run a recovery exercise and estimate cost drivers."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ai-model-ops",
+      "title": "Local AI and model evaluation",
+      "summary": "Prompt context, retrieval, reviewed data, small adapter training, and regression evaluation.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Use local models with bounded context and explicit memory.",
+          "lessons": [
+            {
+              "title": "Inference and context windows",
+              "practice": "Compare concise and oversized prompts and record latency and memory."
+            },
+            {
+              "title": "SQLite retrieval",
+              "practice": "Store a note and test whether relevant queries retrieve it."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Build safe, measurable improvement loops.",
+          "lessons": [
+            {
+              "title": "Reviewed examples and JSONL",
+              "practice": "Curate examples and validate role/content format before export."
+            },
+            {
+              "title": "Baseline evaluation",
+              "practice": "Run a fixed coding set before and after an adapter; compare rubric scores."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Train and ship only demonstrated improvements.",
+          "lessons": [
+            {
+              "title": "LoRA training",
+              "practice": "Train a tiny adapter on reviewed data and track the exact dataset/model."
+            },
+            {
+              "title": "Regression and rollback",
+              "practice": "Reject an adapter that regresses held-out tasks and retain a rollback path."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "multimodal",
+      "title": "Image and video workflows",
+      "summary": "A capability-aware track for image and video input. Raw media requires a vision-capable model and compatible inference pipeline; a text-only coder model can only work from descriptions or extracted metadata.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Represent media tasks and verify model capabilities.",
+          "lessons": [
+            {
+              "title": "Image input and model capability",
+              "practice": "Check the model card and endpoint support before sending a small image."
+            },
+            {
+              "title": "Text descriptions and OCR",
+              "practice": "Compare a human-provided description with OCR text for a screenshot task."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Build bounded image understanding workflows.",
+          "lessons": [
+            {
+              "title": "Image preprocessing",
+              "practice": "Resize a test image within documented limits and evaluate grounded answers."
+            },
+            {
+              "title": "Grounding and uncertainty",
+              "practice": "Ask for visible evidence and score unsupported claims."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Build video analysis from supported components.",
+          "lessons": [
+            {
+              "title": "Frame sampling and timestamps",
+              "practice": "Extract timestamped frames from a short local clip and review summaries."
+            },
+            {
+              "title": "Multimodal evaluation",
+              "practice": "Measure missed events, false claims, latency, and memory on a small labeled set."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

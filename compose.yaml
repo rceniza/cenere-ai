@@ -1,0 +1,18 @@
+services:
+  cenere:
+    build: .
+    command: ["serve", "--bind", "0.0.0.0:8787"]
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      CENERE_DATA_DIR: /data
+      CENERE_MODEL_URL: ${CENERE_MODEL_URL:-http://host.docker.internal:8080/v1/chat/completions}
+      CENERE_MODEL: ${CENERE_MODEL:-default_model}
+    volumes:
+      - cenere_data:/data
+      - cenere_training:/training-data
+    restart: unless-stopped
+
+volumes:
+  cenere_data:
+  cenere_training:

@@ -1,0 +1,9 @@
+/target
+/data
+.env
+/training/.venv
+/browser/.venv
+/training/data
+/training/adapters
+/training/models
+__pycache__/
