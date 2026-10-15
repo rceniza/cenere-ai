@@ -86,15 +86,15 @@ cargo run -- teach "How should this project validate input?" "Use the shared val
 cargo run -- export-training
 ```
 
-The web chat also has a form to save a reviewed correction. Project memory is retrieved from SQLite while answering. CLI and web chat expose a read-only web search function to the model; if it requests a search, Cenere returns the result to the model before it answers. The coding CLI additionally offers shell and page-inspection tools behind per-action approval. Reviewed examples are exported to MLX chat JSONL; normal model responses are never automatically marked as training truth.
+The web chat has a correction form and a **Helpful · save reviewed example** action. In the interactive CLI, type `/good` after an answer to approve it as a learning example. A coding patch is saved as a user-approved example only after you approve and apply it. These are human signals, not proof of correctness; run relevant tests before approving coding results. Unreviewed model output is never automatically treated as training truth. Project memory is retrieved from SQLite while answering. CLI and web chat expose read-only web search; the coding CLI additionally offers shell and page-inspection tools behind per-action approval.
 
-After you have saved at least two reviewed examples, run a small local adapter-training job with:
+On a configured Apple Silicon host, every eight newly reviewed examples trigger a small background LoRA job automatically; you do not need to run `cenere-ai train`. Training competes with inference for unified memory and may slow responses. Configure the local MLX environment and model as described above. Docker can collect reviewed examples in its SQLite database, but does not train inside the container; export those examples and run training on the configured host. Training creates a candidate adapter and does not switch the live model automatically. Evaluate, fuse, and restart the model server with the adapter before it affects answers. The separate manual command remains available when you want to start a training job explicitly:
 
 ```sh
 cenere-ai train --iters 30 --num-layers 1
 ```
 
-The web/CLI chat can stay available in another terminal, although training and inference compete for unified memory and training can slow responses. Training writes a candidate adapter; it does not silently replace the live model. Evaluate and fuse the adapter, then restart the model server to use it. This gives immediate memory-based adaptation during chat and deliberate, checked weight updates from human-reviewed examples.
+SQLite memory can influence answers immediately. Fine-tuning changes weights only when a candidate passes evaluation and is explicitly configured in the model server; Cenere does not hot-swap adapters into a running model process.
 
 The first curated learning batch is in [`curriculum/datasets/rust-foundations-v1`](curriculum/datasets/rust-foundations-v1). Its sample program is checked with `rustc`; the held-out rubric is run against the base model and the adapter before/after training. Run:
 
@@ -118,10 +118,10 @@ docker compose cp cenere:/training-data/train.jsonl training/data/train.jsonl
 
 ## Fine-tune an adapter
 
-See [`training/README.md`](training/README.md). Cenere uses Python and MLX to fine-tune a LoRA adapter for the existing model. Run training separately when chosen; it uses the Mac's unified memory and GPU. It adapts the model, it does not train a foundation model from scratch.
+See [`training/README.md`](training/README.md). Cenere uses Python and MLX to fine-tune a LoRA adapter for the existing model. The background trainer uses the Mac's unified memory and GPU. It adapts the model; it does not train a foundation model from scratch.
 
 The optional Playwright setup and browser commands are in [`browser/README.md`](browser/README.md). Web search retrieves Bing results through Jina Reader. Browser inspection reads a URL, page text, and page errors; browser startup is on demand.
 
 ## How Cenere improves
 
-While coding, save durable project facts with `cenere remember` and save corrections through the chat form or `cenere teach`. Notes are added to later model prompts immediately. Corrections stay in SQLite until exported as reviewed examples; run the LoRA fine-tune separately when you have at least two good examples, then fuse and serve the resulting adapter. Cenere does not silently train on its own unchecked answers, and weight updates do not happen during a chat response. This keeps the everyday coding loop light and avoids training on mistakes.
+While coding, save durable project facts with `cenere remember`. Save an answer from the interactive chat with `/good`, click the web chat's reviewed-example button, submit a corrected example, or approve and apply a coding patch. Notes affect later prompts immediately. Reviewed examples remain in SQLite and trigger an automatic background fine-tune on the configured host in batches of eight. Every adapter is still a candidate: the currently running model keeps its loaded weights until evaluation and a deliberate server restart. Set `CENERE_AUTO_TRAIN=false` to turn off automatic training while retaining example collection.

@@ -15,7 +15,10 @@ use std::{
     io::{self, BufRead, Read, Write},
     net::SocketAddr,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
 };
 
 const WEB: &str = include_str!("../web/index.html");
@@ -104,6 +107,7 @@ struct AppState {
     model_url: String,
     model_name: String,
     search_url: String,
+    auto_training_running: Arc<AtomicBool>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -198,8 +202,13 @@ impl AppState {
         CREATE TABLE IF NOT EXISTS training_examples (
             id INTEGER PRIMARY KEY, prompt TEXT NOT NULL, answer TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );")?;
-        Ok(Self {
+        );
+        CREATE TABLE IF NOT EXISTS auto_training_state (
+            id INTEGER PRIMARY KEY CHECK (id = 1), last_example_count INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'idle', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT OR IGNORE INTO auto_training_state(id) VALUES (1);")?;
+        let state = Self {
             db: Arc::new(Mutex::new(db)),
             http: Client::new(),
             model_url: env::var("CENERE_MODEL_URL")
@@ -207,7 +216,10 @@ impl AppState {
             model_name: env::var("CENERE_MODEL").unwrap_or_else(|_| "default_model".into()),
             search_url: env::var("CENERE_SEARCH_URL")
                 .unwrap_or_else(|_| "https://r.jina.ai/http://www.bing.com/search".into()),
-        })
+            auto_training_running: Arc::new(AtomicBool::new(false)),
+        };
+        state.maybe_start_auto_training()?;
+        Ok(state)
     }
 
     fn memories(&self, query: &str, limit: usize) -> Result<Vec<String>> {
@@ -376,16 +388,135 @@ impl AppState {
     }
 
     fn teach(&self, prompt: &str, answer: &str) -> Result<()> {
-        let db = self
-            .db
-            .lock()
-            .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
-        db.execute(
-            "INSERT INTO training_examples(prompt, answer) VALUES (?1, ?2)",
-            params![prompt, answer],
-        )?;
+        let count = {
+            let db = self
+                .db
+                .lock()
+                .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
+            db.execute(
+                "INSERT INTO training_examples(prompt, answer) VALUES (?1, ?2)",
+                params![prompt, answer],
+            )?;
+            db.query_row("SELECT COUNT(*) FROM training_examples", [], |row| {
+                row.get::<_, i64>(0)
+            })? as usize
+        };
+        self.maybe_start_auto_training_at(count)
+    }
+
+    fn maybe_start_auto_training(&self) -> Result<()> {
+        let count = {
+            let db = self
+                .db
+                .lock()
+                .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
+            db.query_row("SELECT COUNT(*) FROM training_examples", [], |row| {
+                row.get::<_, i64>(0)
+            })? as usize
+        };
+        self.maybe_start_auto_training_at(count)
+    }
+
+    fn maybe_start_auto_training_at(&self, count: usize) -> Result<()> {
+        const BATCH_SIZE: usize = 8;
+        if env::var("CENERE_AUTO_TRAIN").is_ok_and(|value| value.eq_ignore_ascii_case("false"))
+            || count < BATCH_SIZE
+        {
+            return Ok(());
+        }
+        if self
+            .auto_training_running
+            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+            .is_err()
+        {
+            return Ok(());
+        }
+
+        let db = self.db.clone();
+        let last_count = {
+            let connection = db
+                .lock()
+                .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
+            connection.query_row(
+                "SELECT last_example_count FROM auto_training_state WHERE id = 1",
+                [],
+                |row| row.get::<_, i64>(0),
+            )? as usize
+        };
+        if !training_batch_ready(count, last_count, BATCH_SIZE) {
+            self.auto_training_running.store(false, Ordering::Release);
+            return Ok(());
+        }
+
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let python = root.join("training/.venv/bin/python");
+        let model = env::var("CENERE_TRAIN_MODEL")
+            .unwrap_or_else(|_| "training/models/Qwen2.5-Coder-3B-Instruct-4bit".into());
+        if !python.is_file() || !root.join(&model).exists() {
+            self.auto_training_running.store(false, Ordering::Release);
+            println!("Saved {count} reviewed examples. Automatic MLX training will start when the Apple Silicon training environment and local model are available.");
+            return Ok(());
+        }
+
+        let data_dir = root.join(format!("training/data/auto-batch-{count}"));
+        std::fs::create_dir_all(&data_dir)?;
+        export_training_data(self, &data_dir.join("train.jsonl"))?;
+        {
+            let connection = db
+                .lock()
+                .map_err(|_| anyhow::anyhow!("database lock poisoned"))?;
+            connection.execute("UPDATE auto_training_state SET status = 'queued', updated_at = CURRENT_TIMESTAMP WHERE id = 1", [])?;
+        }
+        let output = root.join(format!("training/adapters/auto-batch-{count}"));
+        let running = self.auto_training_running.clone();
+        let state = self.clone();
+        println!("Starting background fine-tuning from {count} reviewed examples. Cenere stays available; inference may slow while training shares memory.");
+        std::thread::spawn(move || {
+            let result = std::process::Command::new(&python)
+                .current_dir(&root)
+                .arg("training/train.py")
+                .arg("--model")
+                .arg(model)
+                .arg("--data")
+                .arg(&data_dir)
+                .arg("--output")
+                .arg(&output)
+                .args(["--iters", "10", "--num-layers", "1"])
+                .status();
+            let status = match result {
+                Ok(exit) if exit.success() => {
+                    println!("Background adapter training finished: {}. It will be used after the model server is restarted with this adapter.", output.display());
+                    "completed"
+                }
+                Ok(exit) => {
+                    eprintln!("Background adapter training failed: {exit}");
+                    "failed"
+                }
+                Err(error) => {
+                    eprintln!("Could not start background adapter training: {error}");
+                    "failed"
+                }
+            };
+            if let Ok(connection) = db.lock() {
+                if status == "completed" {
+                    let _ = connection.execute("UPDATE auto_training_state SET last_example_count = ?1, status = ?2, updated_at = CURRENT_TIMESTAMP WHERE id = 1", params![count as i64, status]);
+                } else {
+                    let _ = connection.execute("UPDATE auto_training_state SET status = ?1, updated_at = CURRENT_TIMESTAMP WHERE id = 1", [status]);
+                }
+            }
+            running.store(false, Ordering::Release);
+            if status == "completed" {
+                if let Err(error) = state.maybe_start_auto_training() {
+                    eprintln!("Could not queue the next reviewed-example batch: {error}");
+                }
+            }
+        });
         Ok(())
     }
+}
+
+fn training_batch_ready(count: usize, last_count: usize, batch_size: usize) -> bool {
+    batch_size > 0 && count >= batch_size && count >= last_count.saturating_add(batch_size)
 }
 
 async fn index() -> Html<&'static str> {
@@ -504,6 +635,18 @@ async fn teach(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
 
+async fn training_status(State(state): State<AppState>) -> Json<serde_json::Value> {
+    let status = state.db.lock().ok().and_then(|db| {
+        db.query_row(
+            "SELECT (SELECT COUNT(*) FROM training_examples), status FROM auto_training_state WHERE id = 1",
+            [],
+            |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)),
+        ).ok()
+    });
+    let (examples, status) = status.unwrap_or((0, "unavailable".into()));
+    Json(serde_json::json!({"examples": examples, "status": status, "batch_size": 8}))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -520,6 +663,7 @@ async fn main() -> Result<()> {
                 .route("/api/chat", post(chat))
                 .route("/api/memories", post(remember))
                 .route("/api/teach", post(teach))
+                .route("/api/training-status", get(training_status))
                 .with_state(state);
             let listener = tokio::net::TcpListener::bind(bind).await?;
             println!("Cenere is available at http://{bind}");
@@ -536,7 +680,12 @@ async fn main() -> Result<()> {
             let proposal =
                 run_agent_team(&state, &task, &context, &repo, ToolAccess::Approval).await?;
             if apply {
-                apply_reviewed_patch(&repo, &proposal)?;
+                if apply_reviewed_patch(&repo, &proposal)? {
+                    state.teach(&task, &proposal)?;
+                    println!(
+                        "Saved the user-approved coding outcome as a reviewed learning example."
+                    );
+                }
             }
         }
         Command::Terminal { repo, files } => {
@@ -734,17 +883,30 @@ fn choose_files(repo: &Path, explicit: Vec<PathBuf>) -> Result<Vec<PathBuf>> {
 
 async fn run_chat_terminal(state: &AppState) -> Result<()> {
     println!("Chat mode. Type /back to return to the workspace menu.");
+    let mut last_exchange: Option<(String, String)> = None;
     loop {
         let prompt = prompt_line("\nyou> ")?;
         let prompt = prompt.trim();
         if prompt == "/back" || prompt == "/quit" {
             break;
         }
+        if prompt == "/good" {
+            if let Some((question, answer)) = last_exchange.take() {
+                state.teach(&question, &answer)?;
+                println!("Saved as a reviewed example. Automatic training starts after 8 new examples when local MLX and the model are available.");
+            } else {
+                println!("There is no previous answer to review yet.");
+            }
+            continue;
+        }
         if prompt.is_empty() {
             continue;
         }
         match state.ask(prompt).await {
-            Ok(reply) => println!("\ncenere> {reply}"),
+            Ok(reply) => {
+                println!("\ncenere> {reply}\nType /good to save it as a reviewed example.");
+                last_exchange = Some((prompt.to_string(), reply));
+            }
             Err(error) => println!("\nCenere could not reach the configured model: {error}"),
         }
     }
@@ -787,7 +949,10 @@ async fn run_coding_terminal(
         let context = read_selected_files(&repo, &files)?;
         let proposal = run_agent_team(state, task, &context, &repo, access).await?;
         if matches!(access, ToolAccess::Approval) {
-            apply_reviewed_patch(&repo, &proposal)?;
+            if apply_reviewed_patch(&repo, &proposal)? {
+                state.teach(task, &proposal)?;
+                println!("Saved the user-approved coding outcome as a reviewed learning example.");
+            }
         } else {
             println!("Read-only mode: proposal was not applied.");
         }
@@ -1042,10 +1207,10 @@ fn normalize_unified_diff(patch: &str) -> String {
     )
 }
 
-fn apply_reviewed_patch(repo: &Path, proposal: &str) -> Result<()> {
+fn apply_reviewed_patch(repo: &Path, proposal: &str) -> Result<bool> {
     let Some(patch) = extract_diff(proposal) else {
         println!("No unified diff was found, so nothing can be applied.");
-        return Ok(());
+        return Ok(false);
     };
     let patch = normalize_unified_diff(&patch);
     let root = repo
@@ -1072,7 +1237,7 @@ fn apply_reviewed_patch(repo: &Path, proposal: &str) -> Result<()> {
             "Patch check failed; nothing was changed.\n{}",
             String::from_utf8_lossy(&checked.stderr)
         );
-        return Ok(());
+        return Ok(false);
     }
     print!(
         "Patch check passed. Apply this change to {}? [y/N] ",
@@ -1083,7 +1248,7 @@ fn apply_reviewed_patch(repo: &Path, proposal: &str) -> Result<()> {
     io::stdin().lock().read_line(&mut answer)?;
     if !matches!(answer.trim().to_ascii_lowercase().as_str(), "y" | "yes") {
         println!("Patch not applied.");
-        return Ok(());
+        return Ok(false);
     }
     let mut apply = std::process::Command::new("git")
         .arg("-C")
@@ -1101,7 +1266,7 @@ fn apply_reviewed_patch(repo: &Path, proposal: &str) -> Result<()> {
         .write_all(patch.as_bytes())?;
     anyhow::ensure!(apply.wait()?.success(), "git apply failed");
     println!("Patch applied.");
-    Ok(())
+    Ok(true)
 }
 
 #[derive(Serialize)]
@@ -1202,7 +1367,9 @@ mod tests {
         db.execute_batch(
             "CREATE TABLE memories (id INTEGER PRIMARY KEY, note TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
              CREATE TABLE messages (id INTEGER PRIMARY KEY, role TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
-             CREATE TABLE training_examples (id INTEGER PRIMARY KEY, prompt TEXT NOT NULL, answer TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);",
+             CREATE TABLE training_examples (id INTEGER PRIMARY KEY, prompt TEXT NOT NULL, answer TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+             CREATE TABLE auto_training_state (id INTEGER PRIMARY KEY CHECK (id = 1), last_example_count INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'idle', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+             INSERT INTO auto_training_state(id) VALUES (1);",
         )
         .unwrap();
         AppState {
@@ -1211,7 +1378,17 @@ mod tests {
             model_url: String::new(),
             model_name: String::new(),
             search_url: "https://r.jina.ai/http://www.bing.com/search".into(),
+            auto_training_running: Arc::new(AtomicBool::new(false)),
         }
+    }
+
+    #[test]
+    fn automatic_training_waits_for_reviewed_example_batches() {
+        assert!(!training_batch_ready(7, 0, 8));
+        assert!(training_batch_ready(8, 0, 8));
+        assert!(!training_batch_ready(15, 8, 8));
+        assert!(training_batch_ready(16, 8, 8));
+        assert!(!training_batch_ready(100, 100, 0));
     }
 
     async fn read_http_request(stream: &mut tokio::net::TcpStream) -> (String, Vec<u8>) {
