@@ -10,6 +10,10 @@ The v5 problem-solving dataset adds two reviewed repair examples to the previous
 |---|---:|---:|
 | Hidden behavior checks | 0/2 | 0/2 |
 
-The Go answer from both models repeated a hunk without changing the behavior and the patch did not apply. The base C# answer contained malformed diff context; the adapter produced a syntactically valid change but retained the original unbounded implementation, so the hidden port-range test still failed. The result shows that lower validation loss did not produce a measured action-level improvement on these cases.
+The evaluator now mirrors Cenere's whitespace-tolerant patch check, so a formatting-only mismatch can proceed to the behavior test. Both Go patches applied after whitespace normalization but still failed to clamp values above 10. The base C# answer contained malformed diff context; the adapter produced a syntactically valid change but retained the original unbounded implementation, so the hidden port-range test still failed. Both versions remain 0/2, and lower validation loss did not produce a measured action-level improvement on these cases.
+
+## Live CLI follow-up
+
+Ran the base model through `cenere code` against a disposable Go fixture without `--apply`. The generated patch passed the whitespace-tolerant applicability check but returned 10 for inputs below 1, which violates the hidden test. The reviewer role incorrectly described that patch as correct. No project files were modified. This confirms that successful patch application and model self-review are not substitutes for running behavior tests; future agent work should add permissioned test execution and send real test failures back to the coder.
 
 Do not promote `training/adapters/problem-solving-v5`. Keep the base model as the default. These two tasks now count as development evidence rather than a pristine future benchmark. Add broader independently reviewed cases and improve patch generation/tool feedback before treating fine-tuning as an improvement.

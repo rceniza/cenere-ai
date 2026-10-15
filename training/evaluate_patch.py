@@ -126,9 +126,17 @@ def check(case: dict, answer: str) -> list[str]:
             return ["could not initialize isolated patch workspace"]
         checked = subprocess.run(["git", "apply", "--recount", "--check", "-"], input=diff,
                                  text=True, cwd=work, capture_output=True, timeout=10, check=False)
+        ignore_space_change = False
+        if checked.returncode:
+            checked = subprocess.run(["git", "apply", "--ignore-space-change", "--recount", "--check", "-"],
+                                     input=diff, text=True, cwd=work, capture_output=True, timeout=10, check=False)
+            ignore_space_change = checked.returncode == 0
         if checked.returncode:
             return ["patch rejected: " + (checked.stderr or checked.stdout)[-OUTPUT_LIMIT:]]
-        applied = subprocess.run(["git", "apply", "--recount", "-"], input=diff,
+        apply_command = ["git", "apply", "--recount", "-"]
+        if ignore_space_change:
+            apply_command.insert(2, "--ignore-space-change")
+        applied = subprocess.run(apply_command, input=diff,
                                  text=True, cwd=work, capture_output=True, timeout=10, check=False)
         if applied.returncode:
             return ["patch apply failed: " + applied.stderr[-OUTPUT_LIMIT:]]

@@ -155,6 +155,29 @@ func clampRetries(value int) int {
                 answer = f"```diff\ndiff --git a/{path} b/{path}\n{body}```"
                 self.assertEqual(PATCH_EVAL.check(case, answer), [])
 
+    def test_go_patch_with_space_indentation_passes_whitespace_fallback(self):
+        case = CASES_V3[0]
+        path = "retries.go"
+        old = (PATCH_EVAL.FIXTURE_ROOT / case["fixture"] / "files" / path).read_text()
+        new = '''package main
+
+func clampRetries(value int) int {
+    if value < 1 {
+        return 1
+    }
+    if value > 10 {
+        return 10
+    }
+    return value
+}
+'''
+        body = "".join(difflib.unified_diff(
+            old.splitlines(keepends=True), new.splitlines(keepends=True),
+            fromfile=f"a/{path}", tofile=f"b/{path}",
+        ))
+        answer = f"```diff\ndiff --git a/{path} b/{path}\n{body}```"
+        self.assertEqual(PATCH_EVAL.check(case, answer), [])
+
 
 if __name__ == "__main__":
     unittest.main()
