@@ -125,3 +125,7 @@ The optional Playwright setup and browser commands are in [`browser/README.md`](
 ## How Cenere improves
 
 While coding, save durable project facts with `cenere remember`. Save an answer from the interactive chat with `/good`, click the web chat's reviewed-example button, submit a corrected example, or approve and apply a coding patch. Notes affect later prompts immediately. Reviewed examples remain in SQLite and trigger an automatic background fine-tune on the configured host in batches of eight. Every adapter is still a candidate: the currently running model keeps its loaded weights until evaluation and a deliberate server restart. Set `CENERE_AUTO_TRAIN=false` to turn off automatic training while retaining example collection.
+
+## Continuous integration
+
+GitHub Actions checks Rust formatting, runs the Rust and Python training-data tests, and builds the production Docker image on pushes to `main`, pull requests, and manual dispatch.

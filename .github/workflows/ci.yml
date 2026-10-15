@@ -1,0 +1,35 @@
+name: CI
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Rust, Python, and Docker checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Rust tests
+        run: cargo test --locked
+
+      - name: Run training data tests
+        run: python -m unittest discover -s training/tests -v
+
+      - name: Build production container
+        run: docker build --tag cenere-ai:ci .
