@@ -44,15 +44,17 @@ class MultistackDatasetTests(unittest.TestCase):
         self.assertTrue(all(row["messages"][-1]["role"] == "assistant" for row in rows))
 
     def test_train_and_validation_prompts_do_not_overlap(self):
+        tracks = {track["id"] for track in json.loads((ROOT / "curriculum/catalog.json").read_text())["tracks"]}
         train = {row["messages"][0]["content"] for row in read_jsonl(DATA / "train.jsonl")}
         valid_rows = read_jsonl(DATA / "valid.jsonl")
         valid = {row["messages"][0]["content"] for row in valid_rows}
-        self.assertEqual(len(valid_rows), 25)
+        self.assertEqual(len(valid_rows), len(tracks))
         self.assertFalse(train & valid)
 
     def test_rubric_eval_has_coverage_for_all_tracks_and_nonempty_checks(self):
         rows = read_jsonl(DATA / "eval.jsonl")
-        self.assertEqual(len(rows), 25)
+        catalog_tracks = {track["id"] for track in json.loads((ROOT / "curriculum/catalog.json").read_text())["tracks"]}
+        self.assertEqual(len(rows), len(catalog_tracks))
         self.assertEqual({row["track"] for row in rows}, {item[0] for item in BUILDER.TRACKS})
         for row in rows:
             self.assertTrue(row["prompt"].strip())
@@ -64,7 +66,7 @@ class MultistackDatasetTests(unittest.TestCase):
         for filename, content in rendered.items():
             self.assertEqual((DATA_V2 / filename).read_bytes(), content, filename)
         train = read_jsonl(DATA_V2 / "train.jsonl")
-        self.assertEqual(len(train), 84)
+        self.assertEqual(len(train), len(json.loads((ROOT / "curriculum/catalog.json").read_text())["tracks"]) * 3 + 9)
         code_rows = [row for row in train if row["id"].endswith("-code")]
         self.assertEqual(len(code_rows), 9)
         self.assertEqual(
@@ -93,6 +95,7 @@ class MultistackDatasetTests(unittest.TestCase):
         train = {row["messages"][0]["content"] for row in read_jsonl(DATA_V2 / "train.jsonl")}
         code_eval = read_jsonl(DATA_V2 / "code-eval.jsonl")
         self.assertEqual(len(code_eval), 9)
+        self.assertEqual(len({row["id"] for row in code_eval}), len(code_eval))
         self.assertEqual(
             {row["language"] for row in code_eval},
             {"c", "cpp", "php", "javascript", "typescript", "nodejs", "python", "rust", "go"},
@@ -109,6 +112,15 @@ class MultistackDatasetTests(unittest.TestCase):
         source = (ROOT / "curriculum/examples/polyglot/typescript/main.ts").read_text()
         failures = CODE_EVAL.check({"language": "typescript"}, f"```typescript\n{source}\n```")
         self.assertEqual(failures, [])
+
+    def test_new_ecosystem_tracks_link_to_official_documentation(self):
+        catalog = json.loads((ROOT / "curriculum/catalog.json").read_text())
+        tracks = {track["id"]: track for track in catalog["tracks"]}
+        expected = {"frontend-frameworks", "backend-frameworks", "legacy-systems", "database-engines", "mobile-desktop", "build-toolchains"}
+        self.assertTrue(expected <= tracks.keys())
+        for track_id in expected:
+            self.assertTrue(tracks[track_id]["references"], track_id)
+            self.assertTrue(all(ref["url"].startswith("https://") for ref in tracks[track_id]["references"]))
 
 
 if __name__ == "__main__":

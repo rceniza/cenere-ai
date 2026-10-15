@@ -1638,6 +1638,524 @@
           ]
         }
       ]
+    },
+    {
+      "id": "frontend-frameworks",
+      "title": "Frontend frameworks, legacy to current",
+      "summary": "Compare legacy DOM libraries and single-page application frameworks with component, compiler, and server-rendered approaches. Verify framework and version details in primary documentation.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Recognize the frontend framework landscape and choose a fitting starting point.",
+          "lessons": [
+            {
+              "title": "From jQuery and AngularJS to component frameworks",
+              "practice": "Compare a small DOM update in jQuery or AngularJS with React, Vue, and Angular; identify state ownership and update behavior."
+            },
+            {
+              "title": "Components, props, and state",
+              "practice": "Build the same small counter in React, Vue, and Svelte and compare where state and events are declared."
+            },
+            {
+              "title": "Client rendering and accessibility",
+              "practice": "Implement an accessible form in one framework and test labels, keyboard flow, validation, and empty states."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Build reliable applications using framework-specific conventions.",
+          "lessons": [
+            {
+              "title": "Routing and data loading",
+              "practice": "Compare route-level data loading and error boundaries in React Router, Angular Router, and Vue Router using current docs."
+            },
+            {
+              "title": "Type safety and component contracts",
+              "practice": "Define and test a typed component contract in React with TypeScript and a Vue or Angular equivalent."
+            },
+            {
+              "title": "State management choices",
+              "practice": "Compare built-in state, context/provide patterns, and an external store for a feature with shared state."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Select rendering and migration strategies with explicit tradeoffs.",
+          "lessons": [
+            {
+              "title": "SSR, hydration, and islands",
+              "practice": "Compare Next.js, Nuxt, SvelteKit, and Angular SSR for a content route; measure startup, hydration, and client bundle costs."
+            },
+            {
+              "title": "Legacy framework migration",
+              "practice": "Plan an incremental migration from jQuery or AngularJS by isolating routes/components and preserving observable behavior."
+            },
+            {
+              "title": "Framework performance and security",
+              "practice": "Profile a realistic route and review rendering, dependency, HTML sanitization, and server/client boundaries."
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "AngularJS migration guide",
+          "url": "https://docs.angularjs.org/guide/migration"
+        },
+        {
+          "title": "Angular documentation",
+          "url": "https://angular.dev/docs"
+        },
+        {
+          "title": "React documentation",
+          "url": "https://react.dev/learn"
+        },
+        {
+          "title": "Vue guide",
+          "url": "https://vuejs.org/guide/introduction.html"
+        },
+        {
+          "title": "Svelte documentation",
+          "url": "https://svelte.dev/docs/svelte/overview"
+        },
+        {
+          "title": "Next.js documentation",
+          "url": "https://nextjs.org/docs"
+        }
+      ]
+    },
+    {
+      "id": "backend-frameworks",
+      "title": "Backend frameworks across ecosystems",
+      "summary": "Build and maintain server applications with established and current frameworks, including Spring, ASP.NET Core, Django, FastAPI, Laravel, Rails, Express, and NestJS.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Understand request handling, routing, and validation in common backend frameworks.",
+          "lessons": [
+            {
+              "title": "Routes and handlers",
+              "practice": "Implement a health endpoint in Express, FastAPI, Laravel, and Spring Boot; compare route and dependency setup."
+            },
+            {
+              "title": "Request validation and error responses",
+              "practice": "Validate a create request and return consistent client errors without exposing stack traces."
+            },
+            {
+              "title": "Configuration and environment",
+              "practice": "Load a service port and database URL from environment configuration; verify startup fails clearly for missing required settings."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Structure maintainable APIs with persistence and tests.",
+          "lessons": [
+            {
+              "title": "Dependency injection and service layers",
+              "practice": "Trace a request through controller, service, and repository layers in ASP.NET Core or Spring Boot; write a service unit test."
+            },
+            {
+              "title": "Database transactions",
+              "practice": "Implement a two-step write in a transaction and test rollback when the second operation fails."
+            },
+            {
+              "title": "Authentication and authorization",
+              "practice": "Add a protected route, check object-level authorization, and test anonymous, permitted, and cross-user requests."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Operate framework applications safely across upgrades and production deployment.",
+          "lessons": [
+            {
+              "title": "Background work and idempotency",
+              "practice": "Build a retryable job with an idempotency key and observable failure state."
+            },
+            {
+              "title": "Framework upgrades and compatibility",
+              "practice": "Plan an upgrade from a legacy framework version using official migration notes, tests, and a staged rollout."
+            },
+            {
+              "title": "Production request lifecycle",
+              "practice": "Measure p95 latency, connection-pool pressure, and graceful shutdown during load and dependency failure."
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "Spring Boot reference",
+          "url": "https://docs.spring.io/spring-boot/reference/"
+        },
+        {
+          "title": "ASP.NET Core documentation",
+          "url": "https://learn.microsoft.com/aspnet/core/"
+        },
+        {
+          "title": "Django documentation",
+          "url": "https://docs.djangoproject.com/en/stable/"
+        },
+        {
+          "title": "FastAPI documentation",
+          "url": "https://fastapi.tiangolo.com/"
+        },
+        {
+          "title": "Laravel documentation",
+          "url": "https://laravel.com/docs"
+        },
+        {
+          "title": "Ruby on Rails guides",
+          "url": "https://guides.rubyonrails.org/"
+        }
+      ]
+    },
+    {
+      "id": "legacy-systems",
+      "title": "Legacy languages and system modernization",
+      "summary": "Read, test, and safely modernize established systems written in COBOL, Fortran, Perl, classic .NET, older Java, and other long-lived technologies.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Read unfamiliar legacy code and build a safe local test loop.",
+          "lessons": [
+            {
+              "title": "Reading COBOL and batch jobs",
+              "practice": "Trace a COBOL record through input validation, calculation, and output; document assumptions before changing it."
+            },
+            {
+              "title": "Fortran numerical programs",
+              "practice": "Run a small Fortran routine with boundary inputs and compare floating-point tolerance rather than exact decimal strings."
+            },
+            {
+              "title": "Perl and shell automation",
+              "practice": "Add input validation and predictable exit codes to a legacy text-processing script."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Add characterization tests and isolate risky behavior.",
+          "lessons": [
+            {
+              "title": "Characterization tests",
+              "practice": "Capture current outputs for representative legacy inputs, then refactor one function without changing behavior."
+            },
+            {
+              "title": "Data encoding and file formats",
+              "practice": "Test a batch job with empty, malformed, truncated, and non-ASCII records; make encoding assumptions explicit."
+            },
+            {
+              "title": "Calling legacy services safely",
+              "practice": "Wrap a legacy executable behind a validated interface with timeouts, bounded input, and useful error reporting."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Modernize incrementally while preserving critical behavior and auditability.",
+          "lessons": [
+            {
+              "title": "Strangler migration planning",
+              "practice": "Move one business capability behind an API while preserving a rollback path and comparing old/new outputs."
+            },
+            {
+              "title": "Mainframe and distributed boundaries",
+              "practice": "Document transaction, batch-window, retry, and reconciliation behavior before splitting a mainframe workflow."
+            },
+            {
+              "title": "Risk-based modernization",
+              "practice": "Rank modules by change rate, incident cost, dependency risk, and testability; propose staged milestones with measurable acceptance checks."
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "IBM COBOL documentation",
+          "url": "https://www.ibm.com/docs/en/cobol-zos"
+        },
+        {
+          "title": "GNU Fortran manual",
+          "url": "https://gcc.gnu.org/onlinedocs/gfortran/"
+        },
+        {
+          "title": "Perl documentation",
+          "url": "https://perldoc.perl.org/"
+        }
+      ]
+    },
+    {
+      "id": "database-engines",
+      "title": "Database engines and migrations",
+      "summary": "Compare SQLite, PostgreSQL, MySQL, SQL Server, Oracle, and document stores by transaction, indexing, concurrency, and operational behavior.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Model data and query it safely across database engines.",
+          "lessons": [
+            {
+              "title": "Relational modeling and keys",
+              "practice": "Model customers and orders with keys and constraints; test duplicate and orphan records."
+            },
+            {
+              "title": "SQL dialects and parameter binding",
+              "practice": "Run the same parameterized lookup in SQLite and PostgreSQL; note syntax differences without interpolating user input."
+            },
+            {
+              "title": "Document and relational data",
+              "practice": "Represent one order in relational tables and a document model; compare validation and update boundaries."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Use indexes, transactions, and migrations with engine-specific awareness.",
+          "lessons": [
+            {
+              "title": "Indexes and query plans",
+              "practice": "Inspect an explain plan before and after an index and measure representative reads and writes."
+            },
+            {
+              "title": "Isolation and concurrent writes",
+              "practice": "Reproduce a lost update or uniqueness race, then use constraints and transactions to prevent it."
+            },
+            {
+              "title": "Schema migration safety",
+              "practice": "Use an expand/backfill/contract migration with code compatible across deployment steps."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Operate data systems with measured reliability and recovery objectives.",
+          "lessons": [
+            {
+              "title": "Replication and failover",
+              "practice": "Document read/write behavior during failover and test reconnect, duplicate work, and recovery."
+            },
+            {
+              "title": "Backup and restore drills",
+              "practice": "Restore a consistent backup into an isolated environment and verify application-level invariants."
+            },
+            {
+              "title": "Engine selection under load",
+              "practice": "Compare workload shape, write concurrency, operational cost, licensing, and recovery before selecting an engine."
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "SQLite documentation",
+          "url": "https://sqlite.org/docs.html"
+        },
+        {
+          "title": "PostgreSQL documentation",
+          "url": "https://www.postgresql.org/docs/current/"
+        },
+        {
+          "title": "MySQL reference manual",
+          "url": "https://dev.mysql.com/doc/"
+        },
+        {
+          "title": "SQL Server documentation",
+          "url": "https://learn.microsoft.com/sql/"
+        },
+        {
+          "title": "Oracle Database documentation",
+          "url": "https://docs.oracle.com/en/database/"
+        },
+        {
+          "title": "MongoDB manual",
+          "url": "https://www.mongodb.com/docs/manual/"
+        }
+      ]
+    },
+    {
+      "id": "mobile-desktop",
+      "title": "Mobile and desktop application stacks",
+      "summary": "Cover native and cross-platform apps including Objective-C/Swift, Java/Kotlin, Flutter/Dart, React Native, Qt, Electron, and Tauri.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Build a small screen and understand platform conventions.",
+          "lessons": [
+            {
+              "title": "Native iOS and Android basics",
+              "practice": "Build a simple form in SwiftUI and Jetpack Compose; compare navigation, state, and accessibility labels."
+            },
+            {
+              "title": "Cross-platform UI options",
+              "practice": "Compare a small screen in Flutter and React Native, including platform-specific behavior and package needs."
+            },
+            {
+              "title": "Desktop application choices",
+              "practice": "Compare a small utility built with Qt, Electron, and Tauri for packaging, native integration, and update size."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Handle platform lifecycle, persistence, and testing.",
+          "lessons": [
+            {
+              "title": "Lifecycle and background work",
+              "practice": "Test pause, resume, process termination, and retry behavior for one mobile workflow."
+            },
+            {
+              "title": "Offline storage and synchronization",
+              "practice": "Queue edits offline, reconcile conflicts explicitly, and test duplicate sync requests."
+            },
+            {
+              "title": "Accessibility and device testing",
+              "practice": "Test keyboard/screen-reader behavior and multiple screen sizes with platform tooling."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Ship secure, observable applications across platform releases.",
+          "lessons": [
+            {
+              "title": "Signing and release channels",
+              "practice": "Document signing keys, staged release, rollback, and emergency revocation for each target platform."
+            },
+            {
+              "title": "Native bridge security",
+              "practice": "Review permissions and data crossing JavaScript/native or plugin boundaries."
+            },
+            {
+              "title": "Compatibility and long-term support",
+              "practice": "Define supported OS versions, telemetry, migration strategy, and a deprecation plan before dropping old devices."
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "SwiftUI documentation",
+          "url": "https://developer.apple.com/documentation/swiftui"
+        },
+        {
+          "title": "Android developer guides",
+          "url": "https://developer.android.com/develop"
+        },
+        {
+          "title": "Flutter documentation",
+          "url": "https://docs.flutter.dev/"
+        },
+        {
+          "title": "React Native documentation",
+          "url": "https://reactnative.dev/docs/getting-started"
+        },
+        {
+          "title": "Qt documentation",
+          "url": "https://doc.qt.io/"
+        },
+        {
+          "title": "Electron documentation",
+          "url": "https://www.electronjs.org/docs/latest"
+        },
+        {
+          "title": "Tauri documentation",
+          "url": "https://tauri.app/start/"
+        }
+      ]
+    },
+    {
+      "id": "build-toolchains",
+      "title": "Build systems and dependency toolchains",
+      "summary": "Use Make, CMake, Maven, Gradle, npm, pnpm, Cargo, and language-specific package/build tools across old and current projects.",
+      "stages": [
+        {
+          "level": "beginner",
+          "goal": "Reproduce a build and understand dependency declarations.",
+          "lessons": [
+            {
+              "title": "Build graphs and incremental work",
+              "practice": "Create a small Make or CMake build and verify unchanged inputs do not rebuild unrelated targets."
+            },
+            {
+              "title": "Package manifests and lockfiles",
+              "practice": "Install from a committed lockfile in a clean directory and compare the resolved dependency graph."
+            },
+            {
+              "title": "Build and test commands",
+              "practice": "Document one-command build, test, and formatting steps for a new contributor."
+            }
+          ]
+        },
+        {
+          "level": "intermediate",
+          "goal": "Make builds repeatable, cached, and diagnosable.",
+          "lessons": [
+            {
+              "title": "Maven and Gradle project structure",
+              "practice": "Compare dependency scopes, test tasks, and build plugins in equivalent Java projects."
+            },
+            {
+              "title": "Workspace package managers",
+              "practice": "Set up a pnpm or npm workspace with two packages and verify the lockfile and scripts in CI."
+            },
+            {
+              "title": "Native build dependencies",
+              "practice": "Diagnose a CMake or Cargo build failure from toolchain version, platform, and dependency metadata."
+            }
+          ]
+        },
+        {
+          "level": "advanced",
+          "goal": "Control supply-chain and reproducibility risks across build systems.",
+          "lessons": [
+            {
+              "title": "Reproducible builds",
+              "practice": "Pin toolchains and dependencies, compare artifacts, and record build provenance."
+            },
+            {
+              "title": "Dependency upgrades and rollback",
+              "practice": "Update a vulnerable dependency in a branch, run the full suite, and define a safe rollback."
+            },
+            {
+              "title": "Build cache trust boundaries",
+              "practice": "Review cache keys and permissions so untrusted pull requests cannot poison release artifacts."
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "GNU Make manual",
+          "url": "https://www.gnu.org/software/make/manual/"
+        },
+        {
+          "title": "CMake documentation",
+          "url": "https://cmake.org/documentation/"
+        },
+        {
+          "title": "Maven documentation",
+          "url": "https://maven.apache.org/guides/"
+        },
+        {
+          "title": "Gradle documentation",
+          "url": "https://docs.gradle.org/current/userguide/userguide.html"
+        },
+        {
+          "title": "npm documentation",
+          "url": "https://docs.npmjs.com/"
+        },
+        {
+          "title": "pnpm documentation",
+          "url": "https://pnpm.io/motivation"
+        },
+        {
+          "title": "Cargo reference",
+          "url": "https://doc.rust-lang.org/cargo/"
+        }
+      ]
     }
   ]
 }

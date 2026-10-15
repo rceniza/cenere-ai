@@ -1,6 +1,6 @@
 # Cenere multistack v1
 
-This curated seed contains 75 supervised examples (one at each beginner, intermediate, and advanced stage for every catalog track), 25 held-out validation examples (one per track), and 25 rubric evaluation prompts (one per track). The tracks cover all 25 catalog areas, including C/C++, C#/.NET, PHP, JavaScript/TypeScript, Node, React, Python, Rust, Go/Java, APIs, SQL, Git/Linux, Docker, CI/CD, Kubernetes, Kafka/Redpanda, caching, SRE, security, cloud, local model operations, and multimodal boundaries.
+This curated seed contains 93 supervised examples (one at each beginner, intermediate, and advanced stage for every catalog track), 31 held-out validation examples (one per track), and 31 rubric evaluation prompts (one per track). The 31 tracks cover broad application areas plus framework families, legacy systems, database engines, mobile/desktop apps, and build toolchains. Examples are concise and are not a substitute for stack-specific code-generation examples and executable tests.
 
 `train.jsonl` and `valid.jsonl` use MLX-LM chat format with `id`, `track`, and `level` metadata. MLX-LM reads `messages` and ignores those extra metadata keys. `eval.jsonl` contains held-out prompts and literal rubric terms; the evaluator reports these heuristic matches, not semantic correctness. Treat the score as a screening signal. Compile generated code, run feature tests, and inspect stack-specific claims before adopting an adapter.
 

@@ -38,7 +38,8 @@ def lines(path: Path) -> list[dict]:
 
 def render() -> dict[str, bytes]:
     train = lines(BASE / "train.jsonl")
-    require(len(train) == 75, "v1 training seed must contain 75 examples")
+    track_count = len(json.loads((ROOT / "curriculum/catalog.json").read_text(encoding="utf-8"))["tracks"])
+    require(len(train) == track_count * 3, "v1 training seed must contain three examples per track")
     ids = {row["id"] for row in train}
     for track, display, source_rel, fence in EXAMPLES:
         prompt = (
@@ -59,7 +60,7 @@ def render() -> dict[str, bytes]:
                 {"role": "assistant", "content": f"```{fence}\n{source}\n```"},
             ],
         })
-    require(len(train) == 84, "v2 should contain the v1 seed plus nine checked coding answers")
+    require(len(train) == track_count * 3 + len(EXAMPLES), "v2 should add checked coding answers to every v1 training row")
     valid = lines(BASE / "valid.jsonl")
     evaluation = lines(BASE / "eval.jsonl")
     train_prompts = {row["messages"][0]["content"] for row in train}
@@ -67,11 +68,11 @@ def render() -> dict[str, bytes]:
     eval_prompts = {row["prompt"] for row in evaluation}
     require(not train_prompts & valid_prompts, "train and validation prompts overlap")
     require(not train_prompts & eval_prompts, "training prompts overlap held-out evaluation")
-    require(len(valid) == 25 and len(evaluation) == 25, "held-out v1 split sizes changed unexpectedly")
+    require(len(valid) == track_count and len(evaluation) == track_count, "held-out v1 split sizes changed unexpectedly")
     code_eval = []
     for track, display, language in CODE_EVAL:
         code_eval.append({
-            "id": f"code-{track}-heldout",
+            "id": f"code-{track}-{language}-heldout",
             "track": track,
             "level": "beginner",
             "language": language,
@@ -115,7 +116,7 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, data in outputs.items():
         (OUT / name).write_bytes(data)
-    print("Wrote 84 training, 25 validation, 25 held-out rubric, and nine held-out code cases.")
+    print(f"Wrote {len(outputs['train.jsonl'].splitlines())} training, {len(outputs['valid.jsonl'].splitlines())} validation, {len(outputs['eval.jsonl'].splitlines())} held-out rubric, and nine held-out code cases.")
 
 
 if __name__ == "__main__":

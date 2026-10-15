@@ -4,7 +4,7 @@ A local-first coding assistant with a Rust CLI and web app, SQLite memory, seque
 
 ## Run the model
 
-The Python 3.12 environment and a local 3B 4-bit Qwen coder checkpoint are prepared in this checkout. Cenere's runtime is Rust; its curriculum and curated data cover many programming languages, frameworks, and infrastructure stacks. The current v1 seed has three concise question/answer examples for each of 25 broad tracks. The v2 coding set currently has checked, executable reference answers for C, C++, PHP, JavaScript, TypeScript, Node.js, Python, Rust, and Go. This is a starting benchmark, not proof of mastery or complete coverage of old and new ecosystems. C#, Java, framework, and infrastructure coding coverage is still being expanded. Cenere is the CLI, web app, tool runner, memory store, and training workflow; it does not call Codex or Claude as an agent. The checkpoint is an existing open-weights model, not a model pretrained from scratch. Cenere can run it locally and train small LoRA adapters from reviewed, curated examples. Optional live search uses the internet. See [the model card](https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct) for the base model's documented scope and limitations. From the repository root:
+The Python 3.12 environment and a local 3B 4-bit Qwen coder checkpoint are prepared in this checkout. Cenere's runtime is Rust; its curriculum and curated data cover many programming languages, frameworks, and infrastructure stacks. The current v1 seed has three concise question/answer examples for each of 31 broad tracks. The v2 coding set currently has checked, executable reference answers for C, C++, PHP, JavaScript, TypeScript, Node.js, Python, Rust, and Go. This is a starting benchmark, not proof of mastery or complete coverage of old and new ecosystems. C#, Java, framework, and infrastructure coding coverage is still being expanded. Cenere is the CLI, web app, tool runner, memory store, and training workflow; it does not call Codex or Claude as an agent. The checkpoint is an existing open-weights model, not a model pretrained from scratch. Cenere can run it locally and train small LoRA adapters from reviewed, curated examples. Optional live search uses the internet. See [the model card](https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct) for the base model's documented scope and limitations. From the repository root:
 
 ```sh
 training/.venv/bin/mlx_lm.server \
@@ -67,7 +67,7 @@ Add `--apply` to validate the diff and ask before applying it. To start a new ap
 
 ## Step-by-step learning tracks
 
-The CLI and web UI share a staged curriculum covering programming foundations; C, C++, C#, PHP, JavaScript/TypeScript, Node.js, React, Python, Rust, Go/Java; web development; backend/API design; SQL; Git/Linux/shell; Docker; CI/CD; Kubernetes; Kafka/Redpanda; caching; observability/SRE; security; cloud/production; and local AI evaluation. All 25 tracks have beginner, intermediate, and advanced stages, with at least three practice lessons in each stage (233 lessons total).
+The CLI and web UI share a staged curriculum covering programming languages; frontend and backend framework families; legacy systems; database engines; mobile/desktop development; web standards; APIs; DevOps; data infrastructure; security; cloud production; local AI; and multimodal capability. The individual lessons name established and current technologies, including AngularJS, Angular, React, Vue, Svelte, jQuery, Spring, ASP.NET Core, Django, FastAPI, Laravel, Rails, COBOL, Fortran, Perl, PostgreSQL, MySQL, Oracle, MongoDB, Swift, Kotlin, Flutter, Electron, CMake, Maven, Gradle, npm, pnpm, and Cargo. All 31 tracks have beginner, intermediate, and advanced stages, with at least three practice lessons in each stage (287 lessons total).
 
 ```sh
 cargo run -- learn
@@ -96,7 +96,7 @@ cenere-ai train --iters 30 --num-layers 1
 
 SQLite memory can influence answers immediately. Fine-tuning changes weights only when a candidate passes evaluation and is explicitly configured in the model server; Cenere does not hot-swap adapters into a running model process.
 
-The initial Rust sample is in [`curriculum/datasets/rust-foundations-v1`](curriculum/datasets/rust-foundations-v1). The broader curated seed spans 25 tracks and all three curriculum stages in [`curriculum/datasets/cenere-multistack-v1`](curriculum/datasets/cenere-multistack-v1): 75 train, 25 validation, and 25 held-out rubric cases. [`cenere-multistack-v2`](curriculum/datasets/cenere-multistack-v2) adds eight source-linked code answers from locally checked C, C++, PHP, JavaScript, Node, Python, Rust, and Go examples. Build the examples and run the base-model benchmark with:
+The initial Rust sample is in [`curriculum/datasets/rust-foundations-v1`](curriculum/datasets/rust-foundations-v1). The broader curated seed spans 31 tracks and all three curriculum stages in [`curriculum/datasets/cenere-multistack-v1`](curriculum/datasets/cenere-multistack-v1): 93 train, 31 validation, and 31 held-out rubric cases. [`cenere-multistack-v2`](curriculum/datasets/cenere-multistack-v2) adds nine source-linked executable code answers from C, C++, PHP, JavaScript, TypeScript, Node, Python, Rust, and Go examples. Build the examples and run the base-model benchmark with:
 
 ```sh
 python3 curriculum/datasets/build_multistack_v1.py --check

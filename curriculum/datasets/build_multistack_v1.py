@@ -136,6 +136,36 @@ TRACKS = [
         ("What should an image-question benchmark record to prevent unsupported claims?", "Store the image, question, expected visible evidence, acceptable answer, and claims that must not be made. Score whether the answer is grounded in the image and whether uncertainty is stated when details are unreadable. OCR output alone should be evaluated separately from visual reasoning."),
         ("How could a video workflow provide temporal evidence to a vision model?", "Decode a short clip into timestamped frames at a documented sampling rate and send them through a video-capable processor. Ask the model to cite timestamps for events and score missed or invented events. This current text-only checkpoint and endpoint cannot consume raw video or frames as images."),
     ]),
+    ("frontend-frameworks", [
+        ("How did frontend development move from jQuery and AngularJS to component frameworks?", "jQuery encourages direct DOM operations, while AngularJS adds its own scope and digest model; AngularJS support ended in 2022. Current frameworks such as React, Vue, Svelte, and Angular organize UI around components and state, but their rendering and reactivity models differ. For a new app, check current support and documentation; for a legacy app, characterize behavior before migrating."),
+        ("How should I choose between React, Vue, Svelte, and Angular for a production UI?", "Compare team experience, existing code, ecosystem needs, rendering requirements, accessibility, upgrade policy, and test tooling. Build the same representative screen and measure its bundle, load behavior, and maintainability instead of relying on a toy benchmark. Framework syntax alone does not determine application quality."),
+        ("How do I migrate an AngularJS or jQuery application without a risky rewrite?", "Add characterization tests around critical user flows, define a stable boundary between old and new screens, and migrate one route or component at a time. Preserve API and accessibility behavior, monitor error rates, and keep a rollback path. AngularJS is end-of-life, so account for security and maintenance risk while planning the migration."),
+    ]),
+    ("backend-frameworks", [
+        ("How should I compare Express, FastAPI, Django, Laravel, Rails, Spring Boot, and ASP.NET Core?", "Start from language and team fit, API and background-job needs, persistence, security requirements, support policy, deployment target, and existing systems. Build one representative endpoint and test validation, authentication, persistence, observability, and upgrade workflow. Do not infer throughput from framework reputation alone."),
+        ("What boundaries help keep a backend framework application testable?", "Keep HTTP parsing and response formatting at the edge, put business rules in a service or domain layer, and isolate persistence behind a repository or explicit interface when that improves testing. Validate input before side effects, use transactions for atomic changes, and test both success and failure paths."),
+        ("How should a team upgrade a long-lived backend framework?", "Read the official version-specific migration guide, inventory deprecated APIs and dependencies, and add tests around behavior before changing versions. Upgrade in small steps, run security and integration checks, deploy progressively, and keep data migrations backward compatible with the rollback window."),
+    ]),
+    ("legacy-systems", [
+        ("How should I start changing an unfamiliar COBOL, Fortran, or Perl system?", "Map inputs, outputs, persistent state, batch schedules, and external calls before editing. Build the current program in a reproducible environment and capture representative behavior, including malformed and boundary records. Ask domain owners to confirm assumptions that are not visible in code."),
+        ("What is a characterization test and why is it useful in legacy modernization?", "It records the existing observable behavior before a refactor, including awkward edge cases that may be relied upon. Use realistic fixtures and compare outputs, side effects, and exit status. Review unexpected behavior with domain owners before preserving or deliberately changing it."),
+        ("How can I modernize a mainframe or legacy batch workflow incrementally?", "Keep the existing system authoritative while placing one capability behind a validated interface. Compare old and new outputs on the same inputs, make retries and reconciliation explicit, and move traffic or records gradually. Define rollback, audit, and data ownership before splitting transactions."),
+    ]),
+    ("database-engines", [
+        ("How should I compare SQLite, PostgreSQL, MySQL, SQL Server, Oracle, and MongoDB?", "Describe the workload first: data shape, transaction boundaries, concurrent writes, query patterns, consistency, scale, operations, licensing, and recovery targets. Prototype representative queries and failure recovery. Product labels such as relational or document do not replace workload measurements."),
+        ("Why do SQL applications need engine-specific tests even when they use an ORM?", "SQL dialects, locking, isolation, constraints, JSON support, and query planning can differ by engine and version. Run migrations and integration tests against the production engine, and inspect generated SQL for critical paths. An ORM does not erase database behavior."),
+        ("How do I migrate a production database without a long incompatible deployment window?", "Use an expand, migrate, and contract sequence: add backward-compatible schema, deploy code that supports old and new forms, backfill in bounded batches, verify invariants, then remove obsolete fields in a later release. Test interruption, retries, rollback limits, and restore from backup."),
+    ]),
+    ("mobile-desktop", [
+        ("How should I choose native Swift or Kotlin versus Flutter or React Native?", "Compare platform-specific APIs, team language skills, accessibility, performance needs, plugin dependencies, release requirements, and long-term maintenance. Prototype the hardest native integration and test on target devices. Cross-platform UI can share code while still needing platform-specific behavior."),
+        ("What must an offline-capable mobile app test beyond the happy path?", "Test loss and restoration of network, app suspension, process termination, duplicate synchronization, stale credentials, and conflicting edits. Make queued operations idempotent and show users when data is pending or conflicted. Verify persistence and recovery on real device configurations."),
+        ("How do I compare Electron, Qt, and Tauri for a desktop application?", "Measure installer and update size, startup, memory, native integration, sandboxing, platform support, and team expertise with a representative feature. Review the security boundary around web content and native APIs, and test signed release and rollback on each supported operating system."),
+    ]),
+    ("build-toolchains", [
+        ("Why should a project commit a dependency lockfile?", "A lockfile records a resolved dependency graph so clean installs can reproduce versions. Commit it for applications, use the documented update workflow, and test installs from a clean checkout. It does not make dependencies safe or guarantee byte-for-byte reproducible builds."),
+        ("How should I choose between Make, CMake, Maven, Gradle, npm, pnpm, and Cargo?", "Use the ecosystem's established tool when it fits the project and contributors. Compare platform support, dependency resolution, incremental builds, workspace needs, plugins, and CI behavior on a representative change. Avoid introducing a second build system without a concrete need."),
+        ("What makes a release build reproducible and safe to cache?", "Pin or record toolchain and dependency inputs, isolate generated artifacts, and verify the same source produces equivalent outputs in a clean environment. Key caches on every relevant input and do not let untrusted jobs write caches consumed by privileged release workflows."),
+    ]),
 ]
 
 VALID = [
@@ -164,6 +194,12 @@ VALID = [
     ("cloud-production", "advanced", "Why record both RTO and RPO?", "RTO is the target time to restore service; RPO is the maximum acceptable data loss measured in time. Backup and replication design must be tested against both targets."),
     ("ai-model-ops", "beginner", "Why keep evaluation prompts out of the training split?", "If evaluation examples are used for optimization, the score no longer estimates generalization. Keep a fixed held-out set and record its provenance."),
     ("multimodal", "advanced", "Can sampling video frames make a text-only model video-capable?", "No. Frame extraction creates images, but the model and serving pipeline still need vision support to interpret them. A text-only model can only process descriptions or OCR text supplied as text."),
+    ("frontend-frameworks", "intermediate", "What should I test when replacing an AngularJS widget with a current component framework?", "Capture the existing user-visible behavior and accessibility first, then test the new component against the same cases. Migrate a narrow boundary, monitor regressions, and keep a rollback path."),
+    ("backend-frameworks", "advanced", "What should be in a framework upgrade plan for a production API?", "Use the official migration guide, test deprecated behavior, dependencies, and database compatibility, deploy progressively, and retain a rollback plan."),
+    ("legacy-systems", "beginner", "Why capture current output before changing a legacy batch program?", "A characterization fixture makes existing behavior visible and repeatable. Include boundary and malformed records, then confirm intentional changes with domain owners."),
+    ("database-engines", "intermediate", "Why run database integration tests on the same engine used in production?", "SQL dialect, isolation, locking, and query plans differ by engine. Test migrations and critical queries against the production engine and version."),
+    ("mobile-desktop", "beginner", "What should I compare before choosing cross-platform mobile development?", "Compare native APIs, accessibility, plugins, performance, team skills, release needs, and device testing using a representative feature."),
+    ("build-toolchains", "intermediate", "What does a dependency lockfile guarantee and what does it not guarantee?", "It records resolved dependency versions to support repeatable installs. It does not prove packages are safe or guarantee reproducible build artifacts."),
 ]
 
 EVAL = [
@@ -192,6 +228,12 @@ EVAL = [
     ("cloud-production", "intermediate", "Explain how to plan rollback when a deployment includes a database schema change.", [["backward compatible", "expand"], ["rollback", "known-good"], ["migration", "schema"]], ["assume database changes always roll back with code"]),
     ("ai-model-ops", "advanced", "How should a low-resource LoRA candidate be evaluated before serving it?", [["held-out", "evaluation set"], ["base model", "baseline"], ["regression", "correctness"], ["memory", "pressure"]], ["promote based only on training loss"]),
     ("multimodal", "beginner", "Can the installed text-only Qwen2.5-Coder inspect an image or video? Explain the missing components.", [["text-only", "qwen2forcausallm"], ["vision", "vision-language"], ["processor", "image payload"], ["video", "frames"]], ["yes, because OCR is automatic"]),
+    ("frontend-frameworks", "advanced", "Plan a safe migration from an unsupported AngularJS application to a maintained frontend framework.", [["end-of-life", "ended support", "unsupported"], ["characterization", "behavior tests"], ["incremental", "one route", "component boundary"], ["rollback", "monitor"]], ["rewrite everything without tests"]),
+    ("backend-frameworks", "intermediate", "Name the boundaries and tests for a maintainable API built with a backend framework.", [["validation", "validate input"], ["service", "business rules"], ["transaction", "atomic"], ["failure", "error path"]], ["return stack traces to clients"]),
+    ("legacy-systems", "advanced", "Describe a low-risk strangler migration for a batch capability in a legacy system.", [["interface", "boundary"], ["compare", "old and new"], ["idempotent", "reconciliation"], ["rollback", "audit"]], ["switch all records in one untested release"]),
+    ("database-engines", "advanced", "Explain an expand-migrate-contract database rollout and its rollback limits.", [["backward compatible", "expand"], ["backfill", "bounded"], ["verify", "invariant"], ["rollback", "backup"]], ["assume schema and code roll back atomically"]),
+    ("mobile-desktop", "intermediate", "List failure cases an offline mobile synchronization test should cover.", [["network", "offline"], ["duplicate", "idempotent"], ["conflict", "reconcile"], ["process", "suspension"]], ["retry every operation without an idempotency key"]),
+    ("build-toolchains", "advanced", "Explain how to protect a release pipeline from dependency and build-cache risks.", [["pin", "toolchain"], ["lockfile", "dependency graph"], ["cache key", "inputs"], ["untrusted", "privileged"]], ["share writable cache with untrusted jobs"]),
 ]
 
 
@@ -231,7 +273,7 @@ def render() -> dict[str, bytes]:
          "must_include_any": groups, "must_not_include": forbidden}
         for track, level, prompt, groups, forbidden in EVAL
     ]
-    require(len(train_rows) == 75 and len(valid_rows) == len(eval_rows) == 25, "dataset split sizes changed unexpectedly")
+    require(len(train_rows) == len(TRACKS) * 3 and len(valid_rows) == len(eval_rows) == len(TRACKS), "dataset split sizes changed unexpectedly")
     all_prompts = [row["messages"][0]["content"] for row in train_rows + valid_rows]
     require(len(all_prompts) == len(set(all_prompts)), "train/valid prompts must not overlap")
     eval_prompts = {row["prompt"] for row in eval_rows}

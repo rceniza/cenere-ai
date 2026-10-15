@@ -2,7 +2,7 @@
 
 This dataset adds nine complete supervised code answers to the v1 curriculum seed: C, C++, PHP, JavaScript, TypeScript, Node.js, Python, Rust, and Go. Each answer is read directly from a repository polyglot reference implementation. The harness compiles or runs each available implementation against seven shared input/output cases. Java is skipped on this Mac because its launcher/runtime is unavailable. C#, React, and infrastructure tracks still need stack-specific code tasks in later batches.
 
-The split is 84 training rows (75 v1 curriculum explanations plus nine code answers), 25 validation rows, 25 broad held-out rubric prompts, and nine held-out code prompts. They do not repeat training prompts and are scored by compiling/running generated programs against the shared seven-case behavior suite. Keep the broad rubric and code benchmark as separate signals: the former checks curriculum regression; the latter checks the narrow coding behavior directly.
+The split is 102 training rows (93 v1 curriculum explanations plus nine code answers), 31 validation rows, 31 broad held-out rubric prompts, and nine held-out code prompts. They do not repeat training prompts and are scored by compiling/running generated programs against the shared seven-case behavior suite. Keep the broad rubric and code benchmark as separate signals: the former checks curriculum regression; the latter checks the narrow coding behavior directly.
 
 Rebuild and validate the generated files:
 
